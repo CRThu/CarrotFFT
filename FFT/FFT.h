@@ -11,15 +11,15 @@
 extern uint32_t FFT_N;
 extern uint8_t FFT_LOGN;
 
-extern Complex* pWNm;
+extern complex_t* pWNm;
 extern uint32_t pWNmCnt;
 
 uint32_t FFT_Init(uint32_t fft_num);
 void FFT_DeInit();
-void GenWNm(Complex* p);
-Complex GetWNm(uint32_t index);
-Complex PrintWNm();
-void InvertedArray(Complex* complexArray);
-void FFTCalc(Complex* complexFFT);
+void GenWNm(complex_t* p);
+complex_t GetWNm(uint32_t index);
+complex_t PrintWNm();
+void InvertedArray(complex_t* complexArray);
+void FFTCalc(complex_t* complexFFT);
 
 #endif // _FFT_H_

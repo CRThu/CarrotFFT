@@ -5,6 +5,7 @@
 #include <psapi.h>
 #pragma  comment(lib,"Psapi.lib")
 
+#include "timer_wrapper.h"
 #include "complex.h"
 #include "FFT.h"
 
@@ -15,11 +16,11 @@
 
 // TESTBENCH
 //#define VERIFY_TESTBENCH    10
-//#define SPEED_TESTBENCH     1048576
-#define SPEED_TESTBENCH     1048576*256
+#define SPEED_TESTBENCH     1048576
+//#define SPEED_TESTBENCH     1048576*256
 
 // Sine
-void GenSine(Complex* sine, double fs, double cnt)
+void GenSine(complex_t* sine, double fs, double cnt)
 {
     for (uint32_t i = 0; i < cnt; i++)
     {
@@ -27,15 +28,26 @@ void GenSine(Complex* sine, double fs, double cnt)
     }
 }
 
+void test(int* t)
+{
+    Sleep(*t);
+}
+
 int main()
 {
+    printf("CARROT-FFT-LIBRARY TESTBENCH @ https://github.com/CRThu \n");
+
+    int t = 1;
+    double elapsed = timed_exec(test, &t);
+    printf("TIME WRAPPER RETURNED: %.3lf ms\r\n", elapsed / 1000.0);
+
+
     int iter = 1;
     int fft_sample_cnt = SAMPLE_CNT;
 #if SPEED_TESTBENCH != 0
     iter = (int)ceil(log2(SPEED_TESTBENCH));
     fft_sample_cnt = 2;
 #endif
-    printf("CARROT-FFT-LIBRARY TESTBENCH @ https://github.com/CRThu \n");
 
     printf("\n");
     printf("|\tFFT N |\tINIT Elapsed |\tCALC Elapsed |\tMemory Usage |\n");
@@ -58,11 +70,11 @@ int main()
         //PrintWNm();
 
         // MALLOC
-        Complex* fft_io = NULL;
-        fft_io = (Complex*)malloc(sizeof(Complex) * FFT_N);
+        complex_t* fft_io = NULL;
+        fft_io = (complex_t*)malloc(sizeof(complex_t) * FFT_N);
         if (fft_io == NULL)
             return -1;
-        memset(fft_io, 0, sizeof(Complex) * FFT_N);
+        memset(fft_io, 0, sizeof(complex_t) * FFT_N);
 
         // GEN SINE WAVE
         GenSine(fft_io, SINE_FS, fft_sample_cnt);

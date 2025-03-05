@@ -4,7 +4,7 @@
 uint32_t FFT_N = 0;
 uint8_t FFT_LOGN = 0;
 
-Complex* pWNm = (void*)0;
+complex_t* pWNm = (void*)0;
 uint32_t pWNmCnt = 0;
 
 uint32_t FFT_Init(uint32_t fft_num)
@@ -17,7 +17,7 @@ uint32_t FFT_Init(uint32_t fft_num)
     pWNmCnt = FFT_N / 4;
     if (pWNmCnt == 0)
         pWNmCnt = 1;
-    pWNm = (Complex*)malloc(sizeof(Complex) * pWNmCnt);
+    pWNm = (complex_t*)malloc(sizeof(complex_t) * pWNmCnt);
     if (pWNm == NULL)
         return 0;
 
@@ -32,7 +32,7 @@ void FFT_DeInit()
     pWNm = NULL;
 }
 
-void GenWNm(Complex* p)
+void GenWNm(complex_t* p)
 {
     for (uint32_t m = 0; m < pWNmCnt; m++)
     {
@@ -42,7 +42,7 @@ void GenWNm(Complex* p)
     }
 }
 
-Complex GetWNm(uint32_t index)
+complex_t GetWNm(uint32_t index)
 {
     if (index < pWNmCnt * 1)
         return pWNm[index];
@@ -54,7 +54,7 @@ Complex GetWNm(uint32_t index)
         return CCWRot90Complex(pWNm[index % pWNmCnt]);
 }
 
-Complex PrintWNm()
+complex_t PrintWNm()
 {
     for (uint32_t m = 0; m < FFT_N; m++)
     {
@@ -65,7 +65,7 @@ Complex PrintWNm()
 }
 
 // b[n:0]->b[0:n]
-void InvertedArray(Complex* complexArray)
+void InvertedArray(complex_t* complexArray)
 {
     uint32_t k = 0;
     uint32_t j = 0;
@@ -89,7 +89,7 @@ void InvertedArray(Complex* complexArray)
 
 /*
 // Old Inverted Array
-void InvertedArray(Complex* complexIn, Complex* complexOut)
+void InvertedArray(complex_t* complexIn, complex_t* complexOut)
 {
     uint32_t index_o_calc;
     uint32_t index_i;
@@ -109,11 +109,11 @@ void InvertedArray(Complex* complexIn, Complex* complexOut)
 */
 
 // TODO : can be optimized in loop[J]
-void FFTCalc(Complex* complexFFT)
+void FFTCalc(complex_t* complexFFT)
 {
     uint32_t B, P;
-    Complex pWNmTmp;
-    Complex complexTmp;
+    complex_t pWNmTmp;
+    complex_t complexTmp;
     for (uint16_t L = 1; L <= FFT_LOGN; L++)                    // L = 1:M
     {
         B = pow(2, L - 1);                                      // B = 2^(L-1)

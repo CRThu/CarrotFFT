@@ -1,71 +1,71 @@
 #include "complex.h"
 
-Complex CreateComplex(double Rez, double Imz)
+complex_t CreateComplex(cf_t Rez, cf_t Imz)
 {
-    Complex ComplexA = { Rez,Imz };
+    complex_t ComplexA = { Rez,Imz };
     return ComplexA;
 }
 
-Complex AddComplex(Complex complexA, Complex complexB)
+complex_t AddComplex(complex_t complexA, complex_t complexB)
 {
     complexA.Rez += complexB.Rez;
     complexA.Imz += complexB.Imz;
     return complexA;
 }
 
-Complex SubComplex(Complex complexA, Complex complexB)
+complex_t SubComplex(complex_t complexA, complex_t complexB)
 {
     complexA.Rez -= complexB.Rez;
     complexA.Imz -= complexB.Imz;
     return complexA;
 }
 
-Complex MulComplex(Complex complexA, Complex complexB)
+complex_t MulComplex(complex_t complexA, complex_t complexB)
 {
-    Complex complexC = {
+    complex_t complexC = {
         complexA.Rez * complexB.Rez - complexA.Imz * complexB.Imz,
         complexA.Rez * complexB.Imz + complexA.Imz * complexB.Rez };
     return complexC;
 }
 
-Complex ConjComplex(Complex complexA)
+complex_t ConjComplex(complex_t complexA)
 {
     complexA.Imz = -complexA.Imz;
     return complexA;
 }
 
-Complex CCWRot90Complex(Complex complexA)
+complex_t CCWRot90Complex(complex_t complexA)
 {
-    Complex complexB = { -complexA.Imz,complexA.Rez };
+    complex_t complexB = { -complexA.Imz,complexA.Rez };
     return complexB;
 }
 
-Complex CCWRot180Complex(Complex complexA)
+complex_t CCWRot180Complex(complex_t complexA)
 {
-    Complex complexB = { -complexA.Rez,-complexA.Imz };
+    complex_t complexB = { -complexA.Rez,-complexA.Imz };
     return complexB;
 }
 
-Complex CCWRot270Complex(Complex complexA)
+complex_t CCWRot270Complex(complex_t complexA)
 {
-    Complex complexB = { complexA.Imz,-complexA.Rez };
+    complex_t complexB = { complexA.Imz,-complexA.Rez };
     return complexB;
 }
 
-double ModComplex(Complex complexA)
+cf_t ModComplex(complex_t complexA)
 {
     return sqrt(complexA.Rez * complexA.Rez + complexA.Imz * complexA.Imz);
 }
 
-void SwapComplex(Complex* complexA, Complex* complexB)
+void SwapComplex(complex_t* complexA, complex_t* complexB)
 {
-    Complex complexSwap;
+    complex_t complexSwap;
     memcpy(&complexSwap, (void*)complexA, sizeof(complexSwap));
     memcpy((void*)complexA, (void*)complexB, sizeof(complexSwap));
     memcpy((void*)complexB, &complexSwap, sizeof(complexSwap));
 }
 
-void PrintComplex(Complex complexA)
+void PrintComplex(complex_t complexA)
 {
     printf("%c%.6f%c%.6fj", complexA.Rez >= 0 ? '+' : '-', fabs(complexA.Rez),
         complexA.Imz >= 0 ? '+' : '-', fabs(complexA.Imz));
