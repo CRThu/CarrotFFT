@@ -1,2 +1,0 @@
-D:\GitHub\Carrot-FFT-Library\FFT\Debug\FFT.exe
-D:\GitHub\Carrot-FFT-Library\FFT\Debug\FFT.pdb
