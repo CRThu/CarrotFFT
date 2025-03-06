@@ -1,113 +1,101 @@
-
-#include <time.h>
-#include <string.h>
-#include <windows.h>
-#include <psapi.h>
-#pragma  comment(lib,"Psapi.lib")
-
 #include "timer_wrapper.h"
 #include "complex.h"
 #include "FFT.h"
 
+#define GEN_DATA_FS         (200000)
+#define GEN_DATA_FIN        (921.63)
 
-// DEFINE
-#define SAMPLE_CNT          1048576
-#define SINE_FS             0.05
+#define FFT_PERF_MINN       (256)
+#define FFT_PERF_MAXN       (1048576)
+#define FFT_PERF_STEP       (2)
 
-// TESTBENCH
-//#define VERIFY_TESTBENCH    10
-#define SPEED_TESTBENCH     1048576
-//#define SPEED_TESTBENCH     1048576*256
+#define FFT_VERIFY_FFTN     (256)
+complex_t* tdata[FFT_VERIFY_FFTN] = {};
+complex_t* fdata[FFT_VERIFY_FFTN] = {};
 
-// Sine
-void GenSine(complex_t* sine, double fs, double cnt)
+void GenTestData(complex_t* sine, uint32_t* len)
 {
-    for (uint32_t i = 0; i < cnt; i++)
+    for (uint32_t i = 0; i < len; i++)
     {
-        sine[i] = CreateComplex(sin((double)2.0 * PI * (double)i * (double)fs), 0);
+        sine[i] = CreateComplex(sin((double)2.0 * PI * (double)i * (double)GEN_DATA_FIN) / (double)GEN_DATA_FS, 0);
     }
 }
 
-void test(int* t)
+void FftProc(complex_t* data)
 {
-    Sleep(*t);
+    // FFT CALC
+    InvertedArray(data);
+    FFTCalc(data);
+}
+
+void perf_test()
+{
+    printf("|\tFFT N |\tINIT Elapsed |\tCALC Elapsed |\tMemory Usage |\n");
+    printf("|\t----- |\t------------ |\t------------ |\t------------ |\n");
+
+    for (uint32_t fftn = FFT_PERF_MINN; fftn <= FFT_PERF_MAXN; fftn *= FFT_PERF_STEP)
+    {
+        complex_t* data = malloc(sizeof(complex_t) * fftn);
+        if (data == NULL)
+        {
+            printf("[Error]: No enough memory.\r\n");
+            return;
+        }
+        memset(data, 0, sizeof(complex_t) * fftn);
+        GenTestData(data, fftn);
+
+        double InitElapsedTime = timed_exec(FFT_Init, &fftn);
+        double CalcElapsedTime = timed_exec(FftProc, data);
+
+        printf("|%12ld |\t%9.3lf ms |\t%9.3lf ms |\t%9ld KB |\n", fftn, InitElapsedTime / 1000.0, CalcElapsedTime / 1000.0, 0);
+
+        // FREE
+        FFT_DeInit();
+        free(data);
+        data = NULL;
+    }
+}
+
+void verify_test()
+{
+    complex_t* data = malloc(sizeof(complex_t) * FFT_VERIFY_FFTN);
+    if (data == NULL)
+    {
+        printf("[Error]: No enough memory.\r\n");
+        return;
+    }
+    memset(data, 0, sizeof(complex_t) * FFT_VERIFY_FFTN);
+    GenTestData(data, FFT_VERIFY_FFTN);
+
+    uint32_t fftn = FFT_VERIFY_FFTN;
+    FFT_Init(&fftn);
+
+    // WNm For Debug
+    PrintWNm();
+
+    FftProc(data);
+
+    // WNm For Debug
+    for (uint32_t i = 0; i < fftn; i++)
+    {
+        printf("[FFT k = %8d; X(k) = ", i);
+        PrintComplex(data[i]);
+        printf(" (Mod = %.6f)]\n", ModComplex(data[i]));
+    }
+
+    // FREE
+    FFT_DeInit();
+    free(data);
+    data = NULL;
 }
 
 int main()
 {
     printf("CARROT-FFT-LIBRARY TESTBENCH @ https://github.com/CRThu \n");
 
-    int t = 1;
-    double elapsed = timed_exec(test, &t);
-    printf("TIME WRAPPER RETURNED: %.3lf ms\r\n", elapsed / 1000.0);
-
-
-    int iter = 1;
-    int fft_sample_cnt = SAMPLE_CNT;
-#if SPEED_TESTBENCH != 0
-    iter = (int)ceil(log2(SPEED_TESTBENCH));
-    fft_sample_cnt = 2;
-#endif
-
     printf("\n");
-    printf("|\tFFT N |\tINIT Elapsed |\tCALC Elapsed |\tMemory Usage |\n");
-    printf("|\t----- |\t------------ |\t------------ |\t------------ |\n");
-
-    for (int i = 0; i < iter; i++)
-    {
-        clock_t t_start;
-        clock_t t_stop;
-        double InitElapsedTime;
-        double CalcElapsedTime;
-
-        // INIT
-        t_start = clock();
-        FFT_Init(fft_sample_cnt);
-        t_stop = clock();
-        InitElapsedTime = ((double)t_stop - (double)t_start) / (double)CLOCKS_PER_SEC;
-
-        // WNm For Debug
-        //PrintWNm();
-
-        // MALLOC
-        complex_t* fft_io = NULL;
-        fft_io = (complex_t*)malloc(sizeof(complex_t) * FFT_N);
-        if (fft_io == NULL)
-            return -1;
-        memset(fft_io, 0, sizeof(complex_t) * FFT_N);
-
-        // GEN SINE WAVE
-        GenSine(fft_io, SINE_FS, fft_sample_cnt);
-
-        // FFT CALC
-        t_start = clock();
-        InvertedArray(fft_io);
-        FFTCalc(fft_io);
-        t_stop = clock();
-        CalcElapsedTime = ((double)t_stop - (double)t_start) / (double)CLOCKS_PER_SEC;
-
-        HANDLE handle = GetCurrentProcess();
-        PROCESS_MEMORY_COUNTERS pmc;
-        GetProcessMemoryInfo(handle, &pmc, sizeof(pmc));
-
-        printf("|%12ld |\t%10.3lf s |\t%10.3lf s |\t%9ld KB |\n", FFT_N, InitElapsedTime, CalcElapsedTime, (uint64_t)pmc.WorkingSetSize / 1024);
-
-#if VERIFY_TESTBENCH != 0
-        for (uint32_t i = 0; i < FFT_N; (FFT_N <= VERIFY_TESTBENCH) ? (i++) : (i += FFT_N / VERIFY_TESTBENCH))
-        {
-            printf("[FFT k = %8d; X(k) = ", i);
-            PrintComplex(fft_io[i]);
-            printf(" (Mod = %.6f)]\n", ModComplex(fft_io[i]));
-        }
-#endif
-        // FREE
-        FFT_DeInit();
-        free(fft_io);
-        fft_io = NULL;
-
-#if SPEED_TESTBENCH != 0
-        fft_sample_cnt *= 2;
-#endif
-    }
+    perf_test();
+    printf("\n");
+    verify_test();
     return 0;
 }

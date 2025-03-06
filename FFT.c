@@ -7,10 +7,10 @@ uint8_t FFT_LOGN = 0;
 complex_t* pWNm = (void*)0;
 uint32_t pWNmCnt = 0;
 
-uint32_t FFT_Init(uint32_t fft_num)
+uint32_t FFT_Init(uint32_t* fft_num)
 {
     // CALC FFT CONFIG
-    FFT_LOGN = (uint8_t)ceil(log2(fft_num));
+    FFT_LOGN = (uint8_t)ceil(log2(*fft_num));
     FFT_N = (uint32_t)pow(2, FFT_LOGN);
 
     // MALLOC
@@ -42,16 +42,16 @@ void GenWNm(complex_t* p)
     }
 }
 
-complex_t GetWNm(uint32_t index)
+complex_t GetWNm(uint32_t* index)
 {
     if (index < pWNmCnt * 1)
-        return pWNm[index];
+        return pWNm[*index];
     else if (index < pWNmCnt * 2)
-        return CCWRot270Complex(pWNm[index % pWNmCnt]);
+        return CCWRot270Complex(pWNm[*index % pWNmCnt]);
     else if (index < pWNmCnt * 3)
-        return CCWRot180Complex(pWNm[index % pWNmCnt]);
+        return CCWRot180Complex(pWNm[*index % pWNmCnt]);
     else
-        return CCWRot90Complex(pWNm[index % pWNmCnt]);
+        return CCWRot90Complex(pWNm[*index % pWNmCnt]);
 }
 
 complex_t PrintWNm()
@@ -59,7 +59,7 @@ complex_t PrintWNm()
     for (uint32_t m = 0; m < FFT_N; m++)
     {
         printf("[FFT WNm[%d] = ", m);
-        PrintComplex(GetWNm(m));
+        PrintComplex(GetWNm(&m));
         printf("]\n");
     }
 }
@@ -120,7 +120,7 @@ void FFTCalc(complex_t* complexFFT)
         for (uint32_t J = 0; J < B; J++)                        // j = 0:B-1
         {
             P = pow(2, FFT_LOGN - L) * J;                           // P = 2^(M-L)*J
-            pWNmTmp = GetWNm(P);
+            pWNmTmp = GetWNm(&P);
             for (uint32_t K = J; K <= FFT_N - 1; K += pow(2, L))    // K = J:N-1:2^L
             {
                 complexTmp = MulComplex(complexFFT[K + B], pWNmTmp);

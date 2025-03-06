@@ -1,6 +1,6 @@
 #include "complex.h"
 
-complex_t CreateComplex(cf_t Rez, cf_t Imz)
+complex_t CreateComplex(complex_float_t Rez, complex_float_t Imz)
 {
     complex_t ComplexA = { Rez,Imz };
     return ComplexA;
@@ -52,7 +52,7 @@ complex_t CCWRot270Complex(complex_t complexA)
     return complexB;
 }
 
-cf_t ModComplex(complex_t complexA)
+complex_float_t ModComplex(complex_t complexA)
 {
     return sqrt(complexA.Rez * complexA.Rez + complexA.Imz * complexA.Imz);
 }
