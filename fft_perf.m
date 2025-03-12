@@ -24,7 +24,7 @@ gen_fin = 921.63;
 gen_phase = rand() * pi;
 gen_snr = 120;
 gen_vpp = 0.95;
-gen_hd_db = [-115 -105 -130 -130];
+gen_hd_db = [-135 -125 -140 -140];
 gen_thd = 10 * log10(sum(10 .^ (gen_hd_db / 10)));
 
 % test data path
@@ -37,9 +37,9 @@ if self_test_en==1
     n = (0 : 1 : fftn - 1)';
 	tdata = gen_vpp / 2 * cos(2 * pi * gen_fin / fs * n + gen_phase );
 	tdata = awgn(tdata, gen_snr, 'measured');
-    for hdn=1 : length(gen_hd_db)
-        hdn_vpp = gen_vpp * power(10, gen_hd_db(hdn) / 20);
-        tdata = tdata + hdn_vpp / 2 * cos(2 * pi * gen_fin * (hdn + 1) / fs * n + gen_phase );
+    for gen_fhdn=1 : length(gen_hd_db)
+        hdn_vpp = gen_vpp * power(10, gen_hd_db(gen_fhdn) / 20);
+        tdata = tdata + hdn_vpp / 2 * cos(2 * pi * gen_fin * (gen_fhdn + 1) / fs * n + gen_phase );
     end
 else
     tdata = code;
@@ -111,15 +111,18 @@ fdata_pnoise = sum(fdatay_r_p) - fdata_pdc - fdata_pbase - sum(fdata_phd);
 snr = 10 * log10(fdata_pbase / fdata_pnoise);
 thd = 10 * log10(sum(fdata_phd) / fdata_pbase);
 
+base_db = 10 * log10(fdata_pbase);
+hdn_db = 10 * log10(fdata_phd);
+
 % print report
 fprintf('%-16s %-16.2f', 'F (Hz)', fdata_fbase_f);
 for i=1 : fhdn-1
     fprintf('%-16.2f', fdata_fhd_f(i));
 end
 fprintf('\n');
-fprintf('%-16s %-16.4g', 'P', fdata_pbase);
+fprintf('%-16s %-16.2f', 'P (dB)', base_db);
 for i=1 : fhdn-1
-    fprintf('%-16.4g', fdata_phd(i));
+    fprintf('%-16.2f', hdn_db(i));
 end
 fprintf('\n');
 
@@ -151,4 +154,5 @@ if test_data_store == 1
     
     writematrix(snr, fullfile(storepath,'snr.txt'));
     writematrix(thd, fullfile(storepath,'thd.txt'));
+    writematrix(hdn_db, fullfile(storepath,'hdn_db.txt'));
 end
