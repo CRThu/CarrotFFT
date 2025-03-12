@@ -18,9 +18,6 @@
     <ClInclude Include="complex.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="FFT.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="main.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -39,9 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="complex.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="FFT.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">

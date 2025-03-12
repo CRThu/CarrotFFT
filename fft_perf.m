@@ -1,6 +1,6 @@
 % fft params
 fs = 200000.0;  % set signal sample frequency
-fftn = 65536;  % set fft length
+fftn = 1048576;  % set fft length
 fhdn = 5;           % set max distortion
 
 % window params
@@ -147,7 +147,7 @@ if test_data_store == 1
     writematrix(fdatax, fullfile(storepath,'fdatax.txt'));
     writematrix(windata, fullfile(storepath,'windata.txt'));
     writematrix(tdata_win, fullfile(storepath,'tdata_win.txt'));
-    writematrix(fdatay_c_half, fullfile(storepath,'fdatay_c_half.txt'));
+    writematrix(fdatay_c, fullfile(storepath,'fdatay_c.txt'));
     writematrix(fdatay_r_db, fullfile(storepath,'fdatay_r_db.txt'));
     writematrix(fdatay_r_db_norm, fullfile(storepath,'fdatay_r_db_norm.txt'));
     writematrix(fdatay_r_p, fullfile(storepath,'fdatay_r_p.txt'));

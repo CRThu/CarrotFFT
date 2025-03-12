@@ -6,33 +6,25 @@
 #include "load_data.hpp"
 #include "fft_impl.h"
 
+
+#define GEN_DATA_FS         (200000)
+#define GEN_DATA_FIN        (9216.3)
+
+void test_sine(fft_data_t* real, uint32_t size)
+{
+    for (uint32_t i = 0; i < size; i++)
+    {
+        real[i] = sin((double)2.0 * PI * (double)i * (double)GEN_DATA_FIN / (double)GEN_DATA_FS);
+    }
+}
+
+/*
 void FftProc(complex_t* data)
 {
     // FFT CALC
     InvertedArray(data);
     FFTCalc(data);
 }
-
-/*
-#define GEN_DATA_FS         (200000)
-#define GEN_DATA_FIN        (921.63)
-
-#define FFT_PERF_MINN       (256)
-#define FFT_PERF_MAXN       (1048576)
-#define FFT_PERF_STEP       (2)
-
-#define FFT_VERIFY_FFTN     (256)
-complex_t* tdata[FFT_VERIFY_FFTN] = {};
-complex_t* fdata[FFT_VERIFY_FFTN] = {};
-
-void GenTestData(complex_t* sine, uint32_t* len)
-{
-    for (uint32_t i = 0; i < len; i++)
-    {
-        sine[i] = CreateComplex(sin((double)2.0 * PI * (double)i * (double)GEN_DATA_FIN) / (double)GEN_DATA_FS, 0);
-    }
-}
-
 
 void perf_test()
 {
@@ -99,7 +91,8 @@ int main()
 {
     printf("CARROT-FFT-LIBRARY TESTBENCH @ https://github.com/CRThu \n");
 
-    std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata_win");
+    //std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata_win");
+    std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata_win");
     uint32_t tdata_size = tdata_vec.size();
     std::cout << "load data, size = " << tdata_size << std::endl;
 
@@ -108,8 +101,22 @@ int main()
     std::copy(tdata_vec.begin(), tdata_vec.end(), real);
     std::fill_n(img, tdata_size, 0);
 
+
+    //fft_data_t real[16] = { 0 };
+    //fft_data_t img[16] = { 0 };
+    //uint32_t tdata_size = 16;
+    //test_sine(real, tdata_size);
+
     fft_t* fft = fft_init(tdata_size);
-    rfft_calc(fft, real, img);
+    fft_calc(fft, real, img);
+    fft_mag(fft);
+
+    for (uint32_t i = 0; i < 16; i++)
+    {
+        printf("k[%d]: %f\n", i, fft->rez[i]);
+    }
+
+    fft_deinit(fft);
 
     //printf("\n");
     //perf_test();

@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="adcperf.h" />
     <ClInclude Include="complex.h" />
-    <ClInclude Include="FFT.h" />
     <ClInclude Include="fft_impl.h" />
     <ClInclude Include="load_data.hpp" />
     <ClInclude Include="main.h" />
@@ -30,7 +29,6 @@
   <ItemGroup>
     <ClCompile Include="adcperf.c" />
     <ClCompile Include="complex.c" />
-    <ClCompile Include="FFT.c" />
     <ClCompile Include="fft_impl.c" />
     <ClCompile Include="load_data.cpp" />
     <ClCompile Include="main.cpp" />
