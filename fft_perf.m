@@ -11,30 +11,34 @@ fhdn = 5;           % set max distortion
 
 % hft144d
 win_coeff = [1 1.96760033 1.57983607 0.81123644 0.22583558 0.02773848 0.00090360];
-win_mainlobe =7 ;
+win_mainlobe = 7 ;
 win_hdlobe = 5;
 
 % old program used params
 %win_mainlobe = 25;
 %win_hdlobe = 1;
 
-% fake data generate params
+% test data generate params
 self_test_en = 1;
 gen_fin = 921.63;
 gen_phase = rand() * pi;
 gen_snr = 120;
 
+% test data path
+test_data_store = 1;
+rootpath = './testdata';
+
 fhd_search_bin = ceil(0.5 * fhdn + 1);
 
 if self_test_en==1
-    n = 0 : 1 : fftn - 1;
+    n = (0 : 1 : fftn - 1)';
 	tdata = 0.5 * cos(2 * pi * gen_fin / fs * n + gen_phase );
 	tdata = awgn(tdata, gen_snr, 'measured');
 else
-    tdata = code';
+    tdata = code;
 end
 
-fdatax = 0 : 1 / fftn * fs : fs / 2;
+fdatax = (0 : 1 / fftn * fs : fs / 2)';
 
 % generate windata by params
 windata = zeros(size(fftn));
@@ -48,9 +52,15 @@ end
 tdata_win = tdata .* windata;
 
 fdatay_c = fft(tdata_win, fftn);
-%fdatay_c = fdatay_c / fftn;
 fdatay_c_half = fdatay_c(1 : fftn / 2 + 1);
-%fdatay_c_half(2 : fftn / 2 + 1) = fdatay_c_half(2 : fftn / 2 + 1) .* 2;
+
+% new
+fdatay_c_half = fdatay_c_half / fftn; 
+if mod(fftn, 2)==0
+    fdatay_c_half(2 : fftn / 2) = fdatay_c_half(2 : fftn / 2) .* 2;
+else
+    fdatay_c_half(2 : fftn / 2 + 1) = fdatay_c_half(2 : fftn / 2 + 1) .* 2;
+end
 
 fdatay_r = abs(fdatay_c_half);
 fdatay_r_db = 20 * log10(fdatay_r);
@@ -93,3 +103,45 @@ fdata_pnoise = sum(fdatay_r_p) - fdata_pdc - fdata_pbase - sum(fdata_phd);
 % perf calc
 snr = 10 * log10(fdata_pbase / fdata_pnoise);
 thd = 10 * log10(sum(fdata_phd) / fdata_pbase);
+
+% print report
+fprintf('%-16s %-16.2f', 'F (Hz)', fdata_fbase_f);
+for i=1 : fhdn-1
+    fprintf('%-16.2f', fdata_fhd_f(i));
+end
+fprintf('\n');
+fprintf('%-16s %-16.4g', 'P', fdata_pbase);
+for i=1 : fhdn-1
+    fprintf('%-16.4g', fdata_phd(i));
+end
+fprintf('\n');
+
+fprintf('%-16s %-16s\n', 'SNR (dB)', 'THD (dB)');
+fprintf('%-16.2f %-16.2f\n', snr, thd);
+
+% test data gen
+if test_data_store == 1
+    if self_test_en == 1
+        data_name = sprintf('fft@%dpt@%ddb', fftn, gen_snr);
+    else
+        data_name = sprintf('fft@%dpt@%ddb', fftn, snr);
+    end
+    
+    storepath = fullfile('.', rootpath, data_name);
+    
+    if ~isfolder(storepath)
+        mkdir(storepath);
+    end
+    
+    writematrix(tdata, fullfile(storepath,'tdata.txt'));
+    writematrix(fdatax, fullfile(storepath,'fdatax.txt'));
+    writematrix(windata, fullfile(storepath,'windata.txt'));
+    writematrix(tdata_win, fullfile(storepath,'tdata_win.txt'));
+    writematrix(fdatay_c_half, fullfile(storepath,'fdatay_c_half.txt'));
+    writematrix(fdatay_r_db, fullfile(storepath,'fdatay_r_db.txt'));
+    writematrix(fdatay_r_db_norm, fullfile(storepath,'fdatay_r_db_norm.txt'));
+    writematrix(fdatay_r_p, fullfile(storepath,'fdatay_r_p.txt'));
+    
+    writematrix(snr, fullfile(storepath,'snr.txt'));
+    writematrix(thd, fullfile(storepath,'thd.txt'));
+end
