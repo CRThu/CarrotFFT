@@ -1,6 +1,6 @@
 % fft params
-fs = 800000.0;  % set signal sample frequency
-fftn = 131072;  % set fft length
+fs = 200000.0;  % set signal sample frequency
+fftn = 65536;  % set fft length
 fhdn = 5;           % set max distortion
 
 % window params
@@ -23,6 +23,9 @@ self_test_en = 1;
 gen_fin = 921.63;
 gen_phase = rand() * pi;
 gen_snr = 120;
+gen_vpp = 0.95;
+gen_hd_db = [-115 -105 -130 -130];
+gen_thd = 10 * log10(sum(10 .^ (gen_hd_db / 10)));
 
 % test data path
 test_data_store = 1;
@@ -32,8 +35,12 @@ fhd_search_bin = ceil(0.5 * fhdn + 1);
 
 if self_test_en==1
     n = (0 : 1 : fftn - 1)';
-	tdata = 0.5 * cos(2 * pi * gen_fin / fs * n + gen_phase );
+	tdata = gen_vpp / 2 * cos(2 * pi * gen_fin / fs * n + gen_phase );
 	tdata = awgn(tdata, gen_snr, 'measured');
+    for hdn=1 : length(gen_hd_db)
+        hdn_vpp = gen_vpp * power(10, gen_hd_db(hdn) / 20);
+        tdata = tdata + hdn_vpp / 2 * cos(2 * pi * gen_fin * (hdn + 1) / fs * n + gen_phase );
+    end
 else
     tdata = code;
 end
@@ -122,9 +129,9 @@ fprintf('%-16.2f %-16.2f\n', snr, thd);
 % test data gen
 if test_data_store == 1
     if self_test_en == 1
-        data_name = sprintf('fft@%dpt@%ddb', fftn, gen_snr);
+        data_name = sprintf('fft@%dpt@%.0fdb,%.0fdb', fftn, gen_snr, gen_thd);
     else
-        data_name = sprintf('fft@%dpt@%ddb', fftn, snr);
+        data_name = sprintf('fft@%dpt@%.0fdb,%.0fdb', fftn, snr, thd);
     end
     
     storepath = fullfile('.', rootpath, data_name);
