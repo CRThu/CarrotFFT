@@ -132,9 +132,9 @@ fprintf('%-16.2f %-16.2f\n', snr, thd);
 % test data gen
 if test_data_store == 1
     if self_test_en == 1
-        data_name = sprintf('fft@%dpt@%.0fdb,%.0fdb', fftn, gen_snr, gen_thd);
+        data_name = sprintf('fft@%dpt,%.0fdb,%.0fdb', fftn, gen_snr, gen_thd);
     else
-        data_name = sprintf('fft@%dpt@%.0fdb,%.0fdb', fftn, snr, thd);
+        data_name = sprintf('fft@%dpt,%.0fdb,%.0fdb', fftn, snr, thd);
     end
     
     storepath = fullfile('.', rootpath, data_name);

@@ -19,15 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="adcperf.h" />
     <ClInclude Include="complex.h" />
     <ClInclude Include="FFT.h" />
+    <ClInclude Include="fft_impl.h" />
+    <ClInclude Include="load_data.hpp" />
     <ClInclude Include="main.h" />
     <ClInclude Include="timer_wrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="adcperf.c" />
     <ClCompile Include="complex.c" />
     <ClCompile Include="FFT.c" />
-    <ClCompile Include="main.c" />
+    <ClCompile Include="fft_impl.c" />
+    <ClCompile Include="load_data.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="timer_wrapper.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -88,6 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,6 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

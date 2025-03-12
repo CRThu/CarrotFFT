@@ -7,41 +7,6 @@ uint8_t FFT_LOGN = 0;
 complex_t* pWNm = (void*)0;
 uint32_t pWNmCnt = 0;
 
-uint32_t FFT_Init(uint32_t* fft_num)
-{
-    // CALC FFT CONFIG
-    FFT_LOGN = (uint8_t)ceil(log2(*fft_num));
-    FFT_N = (uint32_t)pow(2, FFT_LOGN);
-
-    // MALLOC
-    pWNmCnt = FFT_N / 4;
-    if (pWNmCnt == 0)
-        pWNmCnt = 1;
-    pWNm = (complex_t*)malloc(sizeof(complex_t) * pWNmCnt);
-    if (pWNm == NULL)
-        return 0;
-
-    GenWNm(pWNm);
-
-    return FFT_N;
-}
-
-void FFT_DeInit()
-{
-    free(pWNm);
-    pWNm = NULL;
-}
-
-void GenWNm(complex_t* p)
-{
-    for (uint32_t m = 0; m < pWNmCnt; m++)
-    {
-        *p = CreateComplex(cos((double)2.0 * PI * (double)m / (double)FFT_N),
-            -sin((double)2.0 * PI * (double)m / (double)FFT_N));
-        p++;
-    }
-}
-
 complex_t GetWNm(uint32_t* index)
 {
     if (index < pWNmCnt * 1)

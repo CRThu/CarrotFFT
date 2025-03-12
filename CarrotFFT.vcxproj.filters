@@ -27,6 +27,15 @@
     <ClInclude Include="timer_wrapper.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="load_data.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="adcperf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fft_impl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="complex.c">
@@ -35,10 +44,19 @@
     <ClCompile Include="FFT.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.c">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="timer_wrapper.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="load_data.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="adcperf.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fft_impl.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

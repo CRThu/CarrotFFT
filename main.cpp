@@ -2,6 +2,18 @@
 #include "complex.h"
 #include "FFT.h"
 
+#include <iostream>
+#include "load_data.hpp"
+#include "fft_impl.h"
+
+void FftProc(complex_t* data)
+{
+    // FFT CALC
+    InvertedArray(data);
+    FFTCalc(data);
+}
+
+/*
 #define GEN_DATA_FS         (200000)
 #define GEN_DATA_FIN        (921.63)
 
@@ -21,12 +33,6 @@ void GenTestData(complex_t* sine, uint32_t* len)
     }
 }
 
-void FftProc(complex_t* data)
-{
-    // FFT CALC
-    InvertedArray(data);
-    FFTCalc(data);
-}
 
 void perf_test()
 {
@@ -88,14 +94,26 @@ void verify_test()
     free(data);
     data = NULL;
 }
-
+*/
 int main()
 {
     printf("CARROT-FFT-LIBRARY TESTBENCH @ https://github.com/CRThu \n");
 
-    printf("\n");
-    perf_test();
-    printf("\n");
-    verify_test();
+    std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata_win");
+    uint32_t tdata_size = tdata_vec.size();
+    std::cout << "load data, size = " << tdata_size << std::endl;
+
+    double* real = new double[tdata_size];
+    double* img = new double[tdata_size];
+    std::copy(tdata_vec.begin(), tdata_vec.end(), real);
+    std::fill_n(img, tdata_size, 0);
+
+    fft_t* fft = fft_init(tdata_size);
+    rfft_calc(fft, real, img);
+
+    //printf("\n");
+    //perf_test();
+    //printf("\n");
+    //verify_test();
     return 0;
 }
