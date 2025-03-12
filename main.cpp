@@ -1,6 +1,5 @@
 #include "timer_wrapper.h"
 #include "complex.h"
-#include "FFT.h"
 
 #include <iostream>
 #include "load_data.hpp"
@@ -14,7 +13,7 @@ void test_sine(fft_data_t* real, uint32_t size)
 {
     for (uint32_t i = 0; i < size; i++)
     {
-        real[i] = sin((double)2.0 * PI * (double)i * (double)GEN_DATA_FIN / (double)GEN_DATA_FS);
+        real[i] = sin((double)2.0 * M_PI * (double)i * (double)GEN_DATA_FIN / (double)GEN_DATA_FS);
     }
 }
 
