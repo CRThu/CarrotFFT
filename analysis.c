@@ -77,7 +77,7 @@ void window_calc(analysis_t* analysis)
                 analysis->win_data[i] -= MATH_MUL(analysis->win->coeff[j], MATH_COS((fft_data_t)2.0 * MATH_PI * j * i / (fft_data_t)analysis->fft->fftn));
         }
 #if ANALYSIS_DEBUG_INFO == 1
-        if (i >= ANALYSIS_DEBUG_PRINT_START && i< ANALYSIS_DEBUG_PRINT_END)
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
             printf("win[%6d]: %.12f\n", i, analysis->win_data[i]);
         else if (i == ANALYSIS_DEBUG_PRINT_END)
             printf("... \n");
@@ -88,7 +88,7 @@ void window_calc(analysis_t* analysis)
 void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
 {
 #if ANALYSIS_DEBUG_INFO == 1
-    for (int i = 0; i < analysis->fft; i++)
+    for (int i = 0; i < analysis->fft->fftn; i++)
     {
         if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
             printf("tdata[%6d]: %.12f\n", i, tdata[i]);
@@ -99,7 +99,7 @@ void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
     // tdata_win = tdata .* windata;
     ARR_OPER2(MATH_MUL, tdata, analysis->win_data, analysis->fft->fftn);
 #if ANALYSIS_DEBUG_INFO == 1
-    for (int i = 0; i < analysis->fft; i++)
+    for (int i = 0; i < analysis->fft->fftn; i++)
     {
         if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
             printf("tdata_win[%6d]: %.12f\n", i, tdata[i]);
