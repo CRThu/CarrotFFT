@@ -16,8 +16,8 @@ fft_t* fft_init(uint32_t n)
         return NULL;
 
     fft->fftn = n;
-    fft->wnm_rez = malloc(wnm_SIZE(fft) * sizeof(fft_data_t));
-    fft->wnm_imz = malloc(wnm_SIZE(fft) * sizeof(fft_data_t));
+    fft->wnm_rez = malloc(WNM_SIZE(fft) * sizeof(fft_data_t));
+    fft->wnm_imz = malloc(WNM_SIZE(fft) * sizeof(fft_data_t));
     if (fft->wnm_rez == NULL || fft->wnm_imz == NULL)
     {
         fft_deinit(fft);
@@ -39,7 +39,7 @@ void fft_deinit(fft_t* fft)
 
 void fft_wnm_set(fft_t* fft)
 {
-    for (uint32_t m = 0; m < wnm_SIZE(fft); m++)
+    for (uint32_t m = 0; m < WNM_SIZE(fft); m++)
     {
         fft->wnm_rez[m] = MATH_COS((double)2.0 * MATH_PI * (double)m / (double)fft->fftn);
         fft->wnm_imz[m] = -MATH_SIN((double)2.0 * MATH_PI * (double)m / (double)fft->fftn);
@@ -52,8 +52,8 @@ void fft_wnm_set(fft_t* fft)
 
 void fft_wnm_get(fft_t* fft, uint32_t idx, fft_data_t* rez, fft_data_t* imz)
 {
-    uint32_t r = idx / wnm_SIZE(fft);
-    idx = idx % wnm_SIZE(fft);
+    uint32_t r = idx / WNM_SIZE(fft);
+    idx = idx % WNM_SIZE(fft);
     if (r == 0)
     {
         // +Rez, +Imz
@@ -62,7 +62,7 @@ void fft_wnm_get(fft_t* fft, uint32_t idx, fft_data_t* rez, fft_data_t* imz)
     }
     else if (r == 1)
     {
-        //  +Imz, -Rez
+        // +Imz, -Rez
         *rez = +fft->wnm_imz[idx];
         *imz = -fft->wnm_rez[idx];
     }
@@ -74,7 +74,7 @@ void fft_wnm_get(fft_t* fft, uint32_t idx, fft_data_t* rez, fft_data_t* imz)
     }
     else
     {
-        //  -Imz, +Rez
+        // -Imz, +Rez
         *rez = -fft->wnm_imz[idx];
         *imz = +fft->wnm_rez[idx];
     }
@@ -136,26 +136,29 @@ void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
     fft_data_t wnm_imz;
     fft_data_t temp_rez;
     fft_data_t temp_imz;
-    for (uint16_t L = 1; L <= MATH_LOG2(fft->fftn); L++)                // L = 1:M
+
+    uint32_t fftn_log2 = MATH_LOG2(fft->fftn);
+
+    for (uint16_t L = 1; L <= fftn_log2; L++)                           // L = 1:M
     {
-        B = pow(2, L - 1);                                              // B = 2^(L-1)
+        B = 1 << (L - 1);                                               // B = 2^(L-1)
         for (uint32_t J = 0; J < B; J++)                                // j = 0:B-1
         {
-            P = pow(2, MATH_LOG2(fft->fftn) - L) * J;                   // P = 2^(M-L)*J
+            P = (1 << (fftn_log2 - L)) * J;                             // P = 2^(M-L)*J
             fft_wnm_get(fft, P, &wnm_rez, &wnm_imz);
-            for (uint32_t K = J; K <= fft->fftn - 1; K += pow(2, L))    // K = J:N-1:2^L
+            for (uint32_t K = J; K <= fft->fftn - 1; K += (1 << L))     // K = J:N-1:2^L
             {
                 // data[K+B] * wnm[P]
-                temp_rez = fft->rez[K + B] * wnm_rez - fft->imz[K + B] * wnm_imz;
-                temp_imz = fft->rez[K + B] * wnm_imz + fft->imz[K + B] * wnm_rez;
+                temp_rez = MATH_SUB(MATH_MUL(fft->rez[K + B], wnm_rez), MATH_MUL(fft->imz[K + B], wnm_imz));
+                temp_imz = MATH_ADD(MATH_MUL(fft->rez[K + B], wnm_imz), MATH_MUL(fft->imz[K + B], wnm_rez));
 
                 // data[K+B] = data[K] - data[K+B] * wnm[P]
-                fft->rez[K + B] = fft->rez[K] - temp_rez;
-                fft->imz[K + B] = fft->imz[K] - temp_imz;
+                fft->rez[K + B] = MATH_SUB(fft->rez[K], temp_rez);
+                fft->imz[K + B] = MATH_SUB(fft->imz[K], temp_imz);
 
                 // data[K] = data[K] + data[K+B] * wnm[P]
-                fft->rez[K] = fft->rez[K] + temp_rez;
-                fft->imz[K] = fft->imz[K] + temp_imz;
+                fft->rez[K] = MATH_ADD(fft->rez[K], temp_rez);
+                fft->imz[K] = MATH_ADD(fft->imz[K], temp_imz);
             }
         }
     }
@@ -163,7 +166,7 @@ void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
 #if FFT_DEBUG_INFO == 1
     for (uint32_t i = 0; i < fft->fftn; i++)
     {
-        double magnitude = sqrt(fft->rez[i] * fft->rez[i] + fft->imz[i] * fft->imz[i]);
+        double magnitude = MATH_SQRT(MATH_ADD(MATH_MUL(fft->rez[i], fft->rez[i]), MATH_MUL(fft->imz[i], fft->imz[i])));
 
         printf("k[%d]: %f + %fi (mag = %f)\n", i, fft->rez[i], fft->imz[i], magnitude);
     }
@@ -174,6 +177,6 @@ void fft_mag(fft_t* fft)
 {
     for (uint32_t i = 0; i < fft->fftn; i++)
     {
-        fft->rez[i] = sqrt(fft->rez[i] * fft->rez[i] + fft->imz[i] * fft->imz[i]);
+        fft->rez[i] = MATH_SQRT(MATH_ADD(MATH_MUL(fft->rez[i], fft->rez[i]), MATH_MUL(fft->imz[i], fft->imz[i])));
     }
 }

@@ -120,6 +120,13 @@ int main()
     printf("|\t----- |\t------------ |\t------------ |\n");
     printf("|%12ld |\t%9.3lf ms |\t%9.3lf ms |\n", fft->fftn, init_time / 1000.0, calc_time / 1000.0);
 
+    for (uint32_t i = 0; i < 16; i++)
+    {
+        TIMED_EXEC_R(fft_init, fft, &init_time, tdata_size);    // fft = fft_init(tdata_size);
+        TIMED_EXEC(fft_calc, &calc_time, fft, real, img);       // fft_calc(fft, real, img);
+        printf("|%12ld |\t%9.3lf ms |\t%9.3lf ms |\n", fft->fftn, init_time / 1000.0, calc_time / 1000.0);
+    }
+
     fft_deinit(fft);
 
 

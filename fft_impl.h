@@ -17,12 +17,13 @@ extern "C"
 
     // CARROTFFT CONFIG
 #define FFT_TYPE                FFT_TYPE_RFFT
+#define FFT_DATA_TYPE           double
 #define MATH_IMPL_TYPE          USE_STD_MATH
 
 #if FFT_TYPE == FFT_TYPE_CFFT
 #define wnm_SIZE(FFT)           ((FFT)->fftn >> 1 )
 #elif FFT_TYPE == FFT_TYPE_RFFT
-#define wnm_SIZE(FFT)           ((FFT)->fftn >> 2 )
+#define WNM_SIZE(FFT)           ((FFT)->fftn >> 2 )
 #endif
 
 #if MATH_IMPL_TYPE == USE_STD_MATH  // math.h impl
@@ -38,7 +39,7 @@ extern "C"
 #define MATH_SQRT(A)                (sqrt(A))
 #endif
 
-    typedef double fft_data_t;
+    typedef FFT_DATA_TYPE fft_data_t;
     typedef struct fft_t
     {
         uint32_t fftn;
