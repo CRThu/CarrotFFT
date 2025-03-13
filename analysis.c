@@ -77,15 +77,59 @@ void window_calc(analysis_t* analysis)
                 analysis->win_data[i] -= MATH_MUL(analysis->win->coeff[j], MATH_COS((fft_data_t)2.0 * MATH_PI * j * i / (fft_data_t)analysis->fft->fftn));
         }
 #if ANALYSIS_DEBUG_INFO == 1
-        printf("win[%6d]: %.12f\n", i, analysis->win_data[i]);
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i< ANALYSIS_DEBUG_PRINT_END)
+            printf("win[%6d]: %.12f\n", i, analysis->win_data[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
 #endif
     }
 }
 
 void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
 {
-    ARR_MUL(tdata, analysis->win_data, analysis->fft->fftn);
+#if ANALYSIS_DEBUG_INFO == 1
+    for (int i = 0; i < analysis->fft; i++)
+    {
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
+            printf("tdata[%6d]: %.12f\n", i, tdata[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
+    }
+#endif
+    // tdata_win = tdata .* windata;
+    ARR_OPER2(MATH_MUL, tdata, analysis->win_data, analysis->fft->fftn);
+#if ANALYSIS_DEBUG_INFO == 1
+    for (int i = 0; i < analysis->fft; i++)
+    {
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
+            printf("tdata_win[%6d]: %.12f\n", i, tdata[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
+    }
+#endif
+    // fdatay_c = fft(tdata_win, fftn);
     fft_calc(analysis->fft, tdata, timg);
-    fft_mag(analysis->fft);
+    // fdatay_r = abs(fdatay_c_half);
+    FFT_MAG(analysis->fft, FFT_FFTN_HALF);
+#if ANALYSIS_DEBUG_INFO == 1
+    for (int i = 0; i < FFT_FFTN(analysis->fft, FFT_FFTN_HALF); i++)
+    {
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
+            printf("fdatay_r[%6d]: %.12f\n", i, analysis->fft->rez[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
+    }
+#endif
 
+    // fdatay_r_db = 20 * log10(fdatay_r);
+    FFT_DB(analysis->fft->rez, FFT_FFTN(analysis->fft, FFT_FFTN_HALF), FFT_DB_V);
+#if ANALYSIS_DEBUG_INFO == 1
+    for (int i = 0; i < FFT_FFTN(analysis->fft, FFT_FFTN_HALF); i++)
+    {
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
+            printf("fdatay_r_db[%6d]: %.12f\n", i, analysis->fft->rez[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
+    }
+#endif
 }

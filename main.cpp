@@ -44,7 +44,7 @@ void fft_testbench()
         return;
     }
     TIMED_EXEC(fft_calc, &calc_time, fft, real, img);       // fft_calc(fft, real, img);
-    fft_mag(fft);
+    FFT_MAG(fft, FFT_FFTN_HALF);
 
     /*
     for (uint32_t i = 0; i < 16; i++)
@@ -72,8 +72,8 @@ void analysis_testbench()
 {
     window_t* win = get_window_by_name("HFT144D");
 
-    //std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata_win");
-    std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata_win");
+    std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata");
+    //std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata");
     uint32_t tdata_size = tdata_vec.size();
     std::cout << "load data, size = " << tdata_size << std::endl;
 
@@ -85,12 +85,13 @@ void analysis_testbench()
     double fs = 200000;
     uint8_t hdn = 5;
 
-    analysis_t* analysis = analysis_init(256, fs, win, hdn);
+    analysis_t* analysis = analysis_init(tdata_size, fs, win, hdn);
     if (analysis == NULL)
     {
         std::cout << "no enough memory or error when calling analysis_init()" << std::endl;
         return;
     }
+    analysis_run(analysis, real, img);
 
     analysis_deinit(analysis);
 }

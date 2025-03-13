@@ -1,6 +1,6 @@
 % fft params
-fs = 200000.0;  % set signal sample frequency
-fftn = 256;  % set fft length
+fs = 20000.0;  % set signal sample frequency
+fftn = 65536;  % set fft length
 fhdn = 5;           % set max distortion
 
 % window params
@@ -62,13 +62,13 @@ fdatay_c = fft(tdata_win, fftn);
 fdatay_c_half = fdatay_c(1 : fftn / 2 + 1);
 fdatay_r = abs(fdatay_c_half);
 
-% new
-fdatay_r = fdatay_r / fftn; 
-if mod(fftn, 2)==0
-    fdatay_r(2 : fftn / 2) = fdatay_r(2 : fftn / 2) .* 2;
-else
-    fdatay_r(2 : fftn / 2 + 1) = fdatay_r(2 : fftn / 2 + 1) .* 2;
-end
+% norm
+%fdatay_r = fdatay_r / fftn; 
+%if mod(fftn, 2)==0
+%    fdatay_r(2 : fftn / 2) = fdatay_r(2 : fftn / 2) .* 2;
+%else
+%    fdatay_r(2 : fftn / 2 + 1) = fdatay_r(2 : fftn / 2 + 1) .* 2;
+%end
 
 fdatay_r_db = 20 * log10(fdatay_r);
 

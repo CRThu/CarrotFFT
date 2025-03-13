@@ -45,7 +45,10 @@ void fft_wnm_set(fft_t* fft)
         fft->wnm_imz[m] = -MATH_SIN((double)2.0 * MATH_PI * (double)m / (double)fft->fftn);
 
 #if FFT_DEBUG_INFO == 1
-        printf("wnm[%d]: %f + %fi\n", m, fft->wnm_rez[m], fft->wnm_imz[m]);
+        if (m >= FFT_DEBUG_PRINT_START && m < FFT_DEBUG_PRINT_END)
+            printf("wnm[%d]: %f + %fi\n", m, fft->wnm_rez[m], fft->wnm_imz[m]);
+        else if (m == FFT_DEBUG_PRINT_END)
+            printf("... \n");
 #endif
     }
 }
@@ -102,7 +105,10 @@ void fft_invert(fft_t* fft)
             fft->imz[j] = swap_imz;
 
 #if FFT_DEBUG_INFO == 1
-            printf("[invert]: [%d] <-> [%d]\n", i, j);
+            if (i >= FFT_DEBUG_PRINT_START && i < FFT_DEBUG_PRINT_END)
+                printf("[invert]: [%d] <-> [%d]\n", i, j);
+            else if (i == FFT_DEBUG_PRINT_END)
+                printf("... \n");
 #endif
         }
         // K = 100..00
@@ -115,6 +121,7 @@ void fft_invert(fft_t* fft)
         j += k;
     }
 }
+
 void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
 {
     fft->rez = rez;
@@ -123,8 +130,12 @@ void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
 #if FFT_DEBUG_INFO == 1
     for (uint32_t i = 0; i < fft->fftn; i++)
     {
-        printf("t[%d]: %f + %fi\n", i, fft->rez[i], fft->imz[i]);
+        if (i >= FFT_DEBUG_PRINT_START && i < FFT_DEBUG_PRINT_END)
+            printf("t[%d]: %f + %fi\n", i, fft->rez[i], fft->imz[i]);
+        else if (i == FFT_DEBUG_PRINT_END)
+            printf("... \n");
     }
+}
 #endif
 
     fft_invert(fft);
@@ -166,17 +177,10 @@ void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
 #if FFT_DEBUG_INFO == 1
     for (uint32_t i = 0; i < fft->fftn; i++)
     {
-        double magnitude = MATH_SQRT(MATH_ADD(MATH_MUL(fft->rez[i], fft->rez[i]), MATH_MUL(fft->imz[i], fft->imz[i])));
-
-        printf("k[%d]: %f + %fi (mag = %f)\n", i, fft->rez[i], fft->imz[i], magnitude);
+        if (i >= FFT_DEBUG_PRINT_START && i < FFT_DEBUG_PRINT_END)
+            printf("k[%d]: %f + %fi (mag = %f)\n", i, fft->rez[i], fft->imz[i], MATH_ABS(fft->rez[i], fft->imz[i]));
+        else if (i == FFT_DEBUG_PRINT_END)
+            printf("... \n");
     }
 #endif
-}
-
-void fft_mag(fft_t* fft)
-{
-    for (uint32_t i = 0; i < fft->fftn; i++)
-    {
-        fft->rez[i] = MATH_SQRT(MATH_ADD(MATH_MUL(fft->rez[i], fft->rez[i]), MATH_MUL(fft->imz[i], fft->imz[i])));
-    }
 }

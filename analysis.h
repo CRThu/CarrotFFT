@@ -9,22 +9,10 @@ extern "C"
 
 #include "fft_impl.h"
 
-#define ANALYSIS_VERSION     "1.0.0"
-#define ANALYSIS_DEBUG_INFO  (1)
-
-#define ARR_MUL_C(ARR1, C, SIZE)   do {                 \
-    for (int _i = 0; _i < (SIZE); _i++)                 \
-    {                                                   \
-        ARR1[_i] = MATH_MUL(ARR1[_i], C);               \
-    }                                                   \
-} while(0)
-
-#define ARR_MUL(ARR1, ARR2, SIZE)   do {                \
-    for (int _i = 0; _i < (SIZE); _i++)                 \
-    {                                                   \
-        ARR1[_i] = MATH_MUL(ARR1[_i], ARR2[_i]);        \
-    }                                                   \
-} while(0)
+#define ANALYSIS_VERSION            "1.0.0"
+#define ANALYSIS_DEBUG_INFO         (1)
+#define ANALYSIS_DEBUG_PRINT_START  (0)
+#define ANALYSIS_DEBUG_PRINT_END    (FFT_DEBUG_PRINT_START + 32)
 
     typedef struct window_t
     {
@@ -72,6 +60,7 @@ extern "C"
     analysis_t* analysis_init(uint32_t fftn, double fs, window_t* win, uint8_t hdn);
     void analysis_deinit(analysis_t* analysis);
     void window_calc(analysis_t* analysis);
+    void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg);
 
 
 #ifdef __cplusplus
