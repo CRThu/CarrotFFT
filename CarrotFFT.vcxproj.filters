@@ -27,7 +27,7 @@
     <ClInclude Include="load_data.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="adcperf.h">
+    <ClInclude Include="analysis.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="fft_impl.h">
@@ -47,7 +47,7 @@
     <ClCompile Include="load_data.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="adcperf.c">
+    <ClCompile Include="analysis.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="fft_impl.c">

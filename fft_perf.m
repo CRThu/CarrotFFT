@@ -1,6 +1,6 @@
 % fft params
 fs = 200000.0;  % set signal sample frequency
-fftn = 1048576;  % set fft length
+fftn = 256;  % set fft length
 fhdn = 5;           % set max distortion
 
 % window params
@@ -60,16 +60,16 @@ tdata_win = tdata .* windata;
 
 fdatay_c = fft(tdata_win, fftn);
 fdatay_c_half = fdatay_c(1 : fftn / 2 + 1);
+fdatay_r = abs(fdatay_c_half);
 
 % new
-fdatay_c_half = fdatay_c_half / fftn; 
+fdatay_r = fdatay_r / fftn; 
 if mod(fftn, 2)==0
-    fdatay_c_half(2 : fftn / 2) = fdatay_c_half(2 : fftn / 2) .* 2;
+    fdatay_r(2 : fftn / 2) = fdatay_r(2 : fftn / 2) .* 2;
 else
-    fdatay_c_half(2 : fftn / 2 + 1) = fdatay_c_half(2 : fftn / 2 + 1) .* 2;
+    fdatay_r(2 : fftn / 2 + 1) = fdatay_r(2 : fftn / 2 + 1) .* 2;
 end
 
-fdatay_r = abs(fdatay_c_half);
 fdatay_r_db = 20 * log10(fdatay_r);
 
 fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
