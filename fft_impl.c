@@ -148,7 +148,7 @@ void fft_calc(fft_t* fft, fft_data_t* rez, fft_data_t* imz)
     fft_data_t temp_rez;
     fft_data_t temp_imz;
 
-    uint32_t fftn_log2 = MATH_LOG2(fft->fftn);
+    uint32_t fftn_log2 = (uint32_t)MATH_LOG2(fft->fftn);
 
     for (uint16_t L = 1; L <= fftn_log2; L++)                           // L = 1:M
     {

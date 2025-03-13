@@ -20,7 +20,7 @@ void fft_testbench()
 {
     //std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata_win");
     std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata_win");
-    uint32_t tdata_size = tdata_vec.size();
+    uint32_t tdata_size = (uint32_t)tdata_vec.size();
     std::cout << "load data, size = " << tdata_size << std::endl;
 
     double* real = new double[tdata_size];
@@ -35,7 +35,7 @@ void fft_testbench()
     test_sine(real, tdata_size);
     */
 
-    double init_time, calc_time;
+    double init_time = 0, calc_time = 0;
     fft_t* fft;
     TIMED_EXEC_R(fft_init, fft, &init_time, tdata_size);    // fft = fft_init(tdata_size);
     if (fft == NULL)
@@ -74,7 +74,7 @@ void analysis_testbench()
 
     std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata");
     //std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata");
-    uint32_t tdata_size = tdata_vec.size();
+    uint32_t tdata_size = (uint32_t)tdata_vec.size();
     std::cout << "load data, size = " << tdata_size << std::endl;
 
     double* real = new double[tdata_size];

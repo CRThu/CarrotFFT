@@ -14,6 +14,10 @@ extern "C"
 #define FFT_DEBUG_PRINT_START   (0)
 #define FFT_DEBUG_PRINT_END     (FFT_DEBUG_PRINT_START + 32)
 
+#if FFT_DEBUG_INFO
+#include <stdio.h>
+#endif
+
 #define FFT_TYPE_RFFT           (1)
 #define FFT_TYPE_CFFT           (0) // TODO
 
@@ -34,7 +38,7 @@ extern "C"
 #define FFT_DB_V                    (0)
 #define FFT_DB_P                    (1)
 
-#define FFT_FFTN(FFT, HALF)         ((HALF) == FFT_FFTN_HALF ? ((FFT)->fftn >> 1 + 1) : (FFT)->fftn)
+#define FFT_FFTN(FFT, HALF)         ((HALF) == FFT_FFTN_HALF ? (((FFT)->fftn >> 1) + 1) : (FFT)->fftn)
 
 #if MATH_IMPL_TYPE == USE_STD_MATH  // math.h impl
 #define _USE_MATH_DEFINES

@@ -10,9 +10,16 @@ extern "C"
 #include "fft_impl.h"
 
 #define ANALYSIS_VERSION            "1.0.0"
-#define ANALYSIS_DEBUG_INFO         (1)
+#define ANALYSIS_DEBUG_LOG_INFO     (1)
+#define ANALYSIS_DEBUG_DATA_INFO    (1)
 #define ANALYSIS_DEBUG_PRINT_START  (0)
 #define ANALYSIS_DEBUG_PRINT_END    (FFT_DEBUG_PRINT_START + 32)
+
+#if ANALYSIS_DEBUG_LOG_INFO || ANALYSIS_DEBUG_DATA_INFO
+#include <stdio.h>
+#endif
+
+#define INDEX_CHECK(IDX, SIZE)      ((IDX) < 0) ? 0 : ((IDX) >= (SIZE) ? (SIZE) - 1 : (IDX))
 
     typedef struct window_t
     {
