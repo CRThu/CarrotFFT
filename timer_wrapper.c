@@ -6,7 +6,7 @@
 
 #include <windows.h>
 
-static double get_timestamp_us(void)
+double get_timestamp_us(void)
 {
     static LARGE_INTEGER freq;
     static LARGE_INTEGER start;
@@ -28,7 +28,7 @@ static double get_timestamp_us(void)
 
 #include <time.h>
 
-static double get_timestamp_us(void)
+double get_timestamp_us(void)
 {
     static struct timespec start;
     static int initialized = 0;
@@ -50,7 +50,7 @@ static double get_timestamp_us(void)
 // 需要用户提前配置定时器（例如TIM2）
 static TIM_HandleTypeDef* htim = &htim2; // 根据实际配置修改
 
-static double get_timestamp_us(void)
+double get_timestamp_us(void)
 {
     static uint32_t overflow_count = 0;
     static uint32_t last_counter = 0;
@@ -68,10 +68,3 @@ static double get_timestamp_us(void)
 }
 
 #endif
-
-double timed_exec(timed_func_t func, void* arg)
-{
-    const double start = get_timestamp_us();
-    func(arg);
-    return get_timestamp_us() - start;
-}
