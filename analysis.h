@@ -10,6 +10,9 @@ extern "C"
 #include "fft_impl.h"
 
 #define ANALYSIS_VERSION            "1.0.0"
+
+#define ANALYSIS_HD_FREQ_SEARCH_BINS    (5)     
+
 #define ANALYSIS_DEBUG_LOG_INFO     (1)
 #define ANALYSIS_DEBUG_DATA_INFO    (1)
 #define ANALYSIS_DEBUG_PRINT_START  (0)
@@ -19,7 +22,8 @@ extern "C"
 #include <stdio.h>
 #endif
 
-#define INDEX_CHECK(IDX, SIZE)      ((IDX) < 0) ? 0 : ((IDX) >= (SIZE) ? (SIZE) - 1 : (IDX))
+#define INDEX_CHECK(IDX, SIZE)          ((IDX) < 0) ? 0 : ((IDX) >= (SIZE) ? (SIZE) - 1 : (IDX))
+#define INDEX_TO_FREQ(IDX, FFTN, FS)    (1.0 * IDX * (FS) / (FFTN))
 
     typedef struct window_t
     {
@@ -32,6 +36,24 @@ extern "C"
         uint8_t mainlobe_bins;
         uint8_t hdlobe_bins;
     } window_t;
+
+    typedef struct analysis_report_t
+    {
+        double fsignal;
+        double fsignal_db;
+
+        double* fhd;
+        double* fhd_db;
+
+        double fspur;
+        double fspur_db;
+
+        double snr;
+        double thd;
+        double sfdr;
+        double sinad;
+        double enob;
+    } analysis_report_t;
 
     typedef struct analysis_t
     {

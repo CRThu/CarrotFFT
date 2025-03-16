@@ -31,7 +31,8 @@ gen_thd = 10 * log10(sum(10 .^ (gen_hd_db / 10)));
 test_data_store = 1;
 rootpath = './testdata';
 
-fhd_search_bin = ceil(0.5 * fhdn + 1);
+fhd_search_bin = 5;
+%fhd_search_bin = ceil(0.5 * fhdn + 1);
 
 if self_test_en==1
     n = (0 : 1 : fftn - 1)';
@@ -70,37 +71,31 @@ fdatay_r = abs(fdatay_c_half);
 %    fdatay_r(2 : fftn / 2 + 1) = fdatay_r(2 : fftn / 2 + 1) .* 2;
 %end
 
-fdatay_r_db = 20 * log10(fdatay_r);
-
+% fsignal search
 fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
-
-fdatay_r_db_max = max(fdatay_r_db(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
-fdatay_r_db_norm = fdatay_r_db - fdatay_r_db_max;
-
-fdatay_r_p = fdatay_r .* fdatay_r;
-
-% fbase search
-fdata_fbase_idx = find(fdatay_r_db == fdatay_r_db_max);
-fdata_fbase_f = fdatax(fdata_fbase_idx);
-fdata_fbase_lr_idx = [fdata_fbase_idx - win_mainlobe; fdata_fbase_idx + win_mainlobe];
+fdatay_r_max = max(fdatay_r(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
+fdata_fsignal_idx = find(fdatay_r == fdatay_r_max);
+fdata_fsignal_f = fdatax(fdata_fsignal_idx);
+fdata_fsignal_lr_idx = [fdata_fsignal_idx - win_mainlobe; fdata_fsignal_idx + win_mainlobe];
 
 % fhd search
 fdata_fhd_n = 2 : 1 : fhdn;
-fdata_fhd_calc_idx = fdata_fhd_n * (fdata_fbase_idx - 1) + 1;
-fdata_fhd_search_lr_idx = [ fdata_fhd_calc_idx - fhd_search_bin; fdata_fhd_calc_idx + fhd_search_bin ]';
+fdata_fhd_idx_est = fdata_fhd_n * (fdata_fsignal_idx - 1) + 1;
+fdata_fhd_search_lr_idx = [ fdata_fhd_idx_est - fhd_search_bin; fdata_fhd_idx_est + fhd_search_bin ]';
 
 fdata_fhd_search_max = zeros(fhdn-1,1);
 fdata_fhd_search_idx = zeros(fhdn-1,1);
 for i=1 : fhdn-1
-    fdata_fhd_search_max(i) = max(fdatay_r_p(fdata_fhd_search_lr_idx(i, 1) : fdata_fhd_search_lr_idx(i, 2)));
-    fdata_fhd_search_idx(i) = find(fdatay_r_p == fdata_fhd_search_max(i));
+    fdata_fhd_search_max(i) = max(fdatay_r(fdata_fhd_search_lr_idx(i, 1) : fdata_fhd_search_lr_idx(i, 2)));
+    fdata_fhd_search_idx(i) = find(fdatay_r == fdata_fhd_search_max(i));
 end
 fdata_fhd_f = fdatax(fdata_fhd_search_idx);
 fdata_fhd_lr_idx =  [ fdata_fhd_search_idx - win_hdlobe, fdata_fhd_search_idx + win_hdlobe ];
 
 % power calc
+fdatay_r_p = fdatay_r .* fdatay_r;
 fdata_pdc = sum(fdatay_r_p(fdata_fdc_lr_idx(1) : fdata_fdc_lr_idx(2)));
-fdata_pbase = sum(fdatay_r_p(fdata_fbase_lr_idx(1) : fdata_fbase_lr_idx(2)));
+fdata_pbase = sum(fdatay_r_p(fdata_fsignal_lr_idx(1) : fdata_fsignal_lr_idx(2)));
 fdata_phd = zeros(fhdn-1,1);
 for i=1 : fhdn-1
     fdata_phd(i) = sum(fdatay_r_p(fdata_fhd_lr_idx(i, 1) : fdata_fhd_lr_idx(i, 2)));
@@ -111,16 +106,21 @@ fdata_pnoise = sum(fdatay_r_p) - fdata_pdc - fdata_pbase - sum(fdata_phd);
 snr = 10 * log10(fdata_pbase / fdata_pnoise);
 thd = 10 * log10(sum(fdata_phd) / fdata_pbase);
 
-base_db = 10 * log10(fdata_pbase);
+signal_db = 10 * log10(fdata_pbase);
 hdn_db = 10 * log10(fdata_phd);
 
+% db data chart (norm to 0dB)
+fdatay_r_p_ref = fdatay_r_p(fdata_fsignal_idx);
+fdatay_r_p_norm = fdatay_r_p / fdatay_r_p_ref;
+fdatay_r_p_norm_db = 10 * log10(fdatay_r_p / fdatay_r_p_ref);
+
 % print report
-fprintf('%-16s %-16.2f', 'F (Hz)', fdata_fbase_f);
+fprintf('%-16s %-16.2f', 'F (Hz)', fdata_fsignal_f);
 for i=1 : fhdn-1
     fprintf('%-16.2f', fdata_fhd_f(i));
 end
 fprintf('\n');
-fprintf('%-16s %-16.2f', 'P (dB)', base_db);
+fprintf('%-16s %-16.2f', 'P (dB)', signal_db);
 for i=1 : fhdn-1
     fprintf('%-16.2f', hdn_db(i));
 end
@@ -148,11 +148,11 @@ if test_data_store == 1
     writematrix(windata, fullfile(storepath,'windata.txt'));
     writematrix(tdata_win, fullfile(storepath,'tdata_win.txt'));
     writematrix(fdatay_c, fullfile(storepath,'fdatay_c.txt'));
-    writematrix(fdatay_r_db, fullfile(storepath,'fdatay_r_db.txt'));
-    writematrix(fdatay_r_db_norm, fullfile(storepath,'fdatay_r_db_norm.txt'));
     writematrix(fdatay_r_p, fullfile(storepath,'fdatay_r_p.txt'));
+    writematrix(fdatay_r_p_norm_db, fullfile(storepath,'fdatay_r_p_norm_db.txt'));
     
     writematrix(snr, fullfile(storepath,'snr.txt'));
     writematrix(thd, fullfile(storepath,'thd.txt'));
+    writematrix(signal_db, fullfile(storepath,'signal_db.txt'));
     writematrix(hdn_db, fullfile(storepath,'hdn_db.txt'));
 end

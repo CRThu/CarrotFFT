@@ -82,7 +82,7 @@ void analysis_testbench()
     std::copy(tdata_vec.begin(), tdata_vec.end(), real);
     std::fill_n(img, tdata_size, 0);
 
-    double fs = 200000;
+    double fs = 20000;
     uint8_t hdn = 5;
 
     analysis_t* analysis = analysis_init(tdata_size, fs, win, hdn);

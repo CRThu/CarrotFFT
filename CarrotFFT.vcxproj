@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="analysis.h" />
-    <ClInclude Include="complex.h" />
     <ClInclude Include="fft_impl.h" />
     <ClInclude Include="load_data.hpp" />
     <ClInclude Include="main.h" />
@@ -28,7 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="analysis.c" />
-    <ClCompile Include="complex.c" />
     <ClCompile Include="fft_impl.c" />
     <ClCompile Include="load_data.cpp" />
     <ClCompile Include="main.cpp" />

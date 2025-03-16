@@ -51,7 +51,7 @@ analysis_t* analysis_init(uint32_t fftn, double fs, window_t* win, uint8_t hdn)
         return NULL;
     }
 
-    // 预生成
+    // generate window wave
     window_calc(analysis);
 
     return analysis;
@@ -141,46 +141,51 @@ void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
     }
 #endif
 
-    // fdatay_r_db = 20 * log10(fdatay_r);
-    FFT_DB(analysis->fft->rez, fftn_half, FFT_DB_V);
-#if ANALYSIS_DEBUG_DATA_INFO == 1
-    for (uint32_t i = 0; i < FFT_FFTN(analysis->fft, FFT_FFTN_HALF); i++)
-    {
-        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
-            printf("fdatay_r_db[%6d]: %.12f\n", i, analysis->fft->rez[i]);
-        else if (i == ANALYSIS_DEBUG_PRINT_END)
-            printf("... \n");
-    }
-#endif
-
-    //fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
-    //fdatay_r_db_max = max(fdatay_r_db(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
-    //fdata_fbase_idx = find(fdatay_r_db == fdatay_r_db_max);
-    uint32_t fdc_search_range_start_idx = INDEX_CHECK(analysis->win->mainlobe_bins, fftn_half);
-    uint32_t fdc_search_range_end_idx = INDEX_CHECK(fftn_half - 1, fftn_half);
+    // fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
+    // fdatay_r_max = max(fdatay_r(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
+    // fdata_fbase_idx = find(fdatay_r == fdatay_r_db_max);
     uint32_t fsignal_idx;
-    fft_data_t fsignal_max_db;
-    analysis_search_max(analysis->fft->rez, fdc_search_range_start_idx, fdc_search_range_end_idx, &fsignal_idx, &fsignal_max_db);
+    fft_data_t fsignal_max;
 
-    //fdatay_r_db_norm = fdatay_r_db - fdatay_r_db_max;
-    ARR_OPER2_C(MATH_SUB, analysis->fft->rez, fsignal_max_db, fftn_half);
+    analysis_search_max(analysis->fft->rez,
+        INDEX_CHECK(analysis->win->mainlobe_bins, fftn_half),
+        INDEX_CHECK(fftn_half - 1, fftn_half),
+        &fsignal_idx,
+        &fsignal_max);
+
+    // fdata_fbase_f = fdatax(fdata_fbase_idx);
+    double fsignal = INDEX_TO_FREQ(fsignal_idx, analysis->fft->fftn, analysis->fs);
+
 #if ANALYSIS_DEBUG_LOG_INFO == 1
-    printf("fsignal_idx: %d\n", fsignal_idx);
-    printf("fsignal_max_db: %.6f\n", fsignal_max_db);
+    printf("fsignal: %d %f\n", fsignal_idx, fsignal);
 #endif
-#if ANALYSIS_DEBUG_DATA_INFO == 1
-    for (uint32_t i = 0; i < FFT_FFTN(analysis->fft, FFT_FFTN_HALF); i++)
+
+    // % fhd search
+    // fdata_fhd_n = 2 : 1 : fhdn;
+    for (int hdi = 2; hdi <= analysis->hdn; hdi++)
     {
-        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
-            printf("fdatay_r_db_norm[%6d]: %.12f\n", i, analysis->fft->rez[i]);
-        else if (i == ANALYSIS_DEBUG_PRINT_END)
-            printf("... \n");
-    }
+        // fdata_fhd_calc_idx = fdata_fhd_n * (fdata_fbase_idx - 1) + 1;
+        uint16_t fhd_idx_est = hdi * fsignal_idx;
+        // fdata_fhd_search_lr_idx = [ fdata_fhd_calc_idx - fhd_search_bin; fdata_fhd_calc_idx + fhd_search_bin ]';
+        // fdata_fhd_search_max(i) = max(fdatay_r_db_norm(fdata_fhd_search_lr_idx(i, 1) : fdata_fhd_search_lr_idx(i, 2)));
+        // fdata_fhd_search_idx(i) = find(fdatay_r_db_norm == fdata_fhd_search_max(i));
+
+        uint32_t fhdi_idx;
+        double fhdi_db;
+        analysis_search_max(analysis->fft->rez,
+            INDEX_CHECK(fhd_idx_est - ANALYSIS_HD_FREQ_SEARCH_BINS, fftn_half),
+            INDEX_CHECK(fhd_idx_est + ANALYSIS_HD_FREQ_SEARCH_BINS, fftn_half),
+            &fhdi_idx,
+            &fhdi_db);
+
+        // fdata_fhd_f = fdatax(fdata_fhd_search_idx);
+        double fhdi = INDEX_TO_FREQ(fhdi_idx, analysis->fft->fftn, analysis->fs);
+
+
+#if ANALYSIS_DEBUG_LOG_INFO == 1
+        printf("fhd[%d]: %d %f\n", hdi, fhdi_idx, fhdi);
 #endif
 
-    //% fbase search
-    //fdata_fbase_f = fdatax(fdata_fbase_idx);
-    //fdata_fbase_lr_idx = [fdata_fbase_idx - win_mainlobe; fdata_fbase_idx + win_mainlobe];
+    }
 
-    //fdatay_r_p = fdatay_r .* fdatay_r;
 }
