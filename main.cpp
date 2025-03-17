@@ -72,8 +72,8 @@ void analysis_testbench()
 {
     window_t* win = get_window_by_name("HFT144D");
 
-    std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,120db,-124db", "tdata");
-    //std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,120db,-124db", "tdata");
+    //std::vector<double> tdata_vec = load_data("testdata/fft@65536pt,130db,-124db", "tdata");
+    std::vector<double> tdata_vec = load_data("testdata/fft@1048576pt,180db,-194db", "tdata");
     uint32_t tdata_size = (uint32_t)tdata_vec.size();
     std::cout << "load data, size = " << tdata_size << std::endl;
 

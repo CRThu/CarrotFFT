@@ -40,6 +40,8 @@ extern "C"
 
 #define FFT_FFTN(FFT, HALF)         ((HALF) == FFT_FFTN_HALF ? (((FFT)->fftn >> 1) + 1) : (FFT)->fftn)
 
+    typedef FFT_DATA_TYPE fft_data_t;
+
 #if MATH_IMPL_TYPE == USE_STD_MATH  // math.h impl
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -79,6 +81,27 @@ extern "C"
     }                                                   \
 } while(0)
 
+#define ARR_SUM(RESULT, ARR, START, END) do {           \
+    *(RESULT) = 0;                                      \
+    for (uint32_t _i = (START); _i <= (END); _i++)      \
+    {                                                   \
+        *(RESULT) += (ARR[_i]);                         \
+    }                                                   \
+} while(0)
+
+#define ARR_SUM_KH(SUM, ARR, START, END) do {           \
+    fft_data_t _c = 0.0;                                \
+    fft_data_t _y = 0.0;                                \
+    fft_data_t _t = 0.0;                                \
+    for (uint32_t _i = (START); _i <= (END); _i++)      \
+    {                                                   \
+        _y = ARR[_i] - _c;                              \
+        _t = *(SUM) + _y;                               \
+        _c = (_t - *(SUM)) - _y;                        \
+        *(SUM) = _t;                                    \
+    }                                                   \
+} while (0)
+
 
 #define FFT_MAG(FFT, HALF)          ARR_OPER2(MATH_ABS, (FFT)->rez, (FFT)->imz, FFT_FFTN(FFT, HALF))
 #define FFT_DB(ARR, FFTN, DBTYPE) do {                                          \
@@ -86,7 +109,6 @@ extern "C"
     ARR_OPER2_C(MATH_MUL, ARR, ((DBTYPE) == FFT_DB_V ? 20.0 : 10.0), FFTN);     \
     } while (0)
 
-    typedef FFT_DATA_TYPE fft_data_t;
     typedef struct fft_t
     {
         uint32_t fftn;

@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <stdio.h>
 
 const window_t windows[] =
 {
@@ -51,6 +52,34 @@ analysis_t* analysis_init(uint32_t fftn, double fs, window_t* win, uint8_t hdn)
         return NULL;
     }
 
+    analysis->result = malloc(sizeof(analysis_report_t));
+    if (analysis->result == NULL)
+    {
+        analysis_deinit(analysis);
+        return NULL;
+    }
+
+    analysis->result->fhd_idx = malloc(sizeof(uint32_t) * (analysis->hdn - 1));
+    if (analysis->result->fhd_idx == NULL)
+    {
+        analysis_deinit(analysis);
+        return NULL;
+    }
+
+    analysis->result->fhd = malloc(sizeof(double) * (analysis->hdn - 1));
+    if (analysis->result->fhd == NULL)
+    {
+        analysis_deinit(analysis);
+        return NULL;
+    }
+
+    analysis->result->phd = malloc(sizeof(double) * (analysis->hdn - 1));
+    if (analysis->result->phd == NULL)
+    {
+        analysis_deinit(analysis);
+        return NULL;
+    }
+
     // generate window wave
     window_calc(analysis);
 
@@ -61,6 +90,10 @@ void analysis_deinit(analysis_t* analysis)
 {
     fft_deinit(analysis->fft);
     free(analysis->win_data);
+    free(analysis->result->fhd_idx);
+    free(analysis->result->fhd);
+    free(analysis->result->phd);
+    free(analysis->result);
     free(analysis);
     analysis = NULL;
 }
@@ -132,32 +165,41 @@ void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
     // fdatay_r = abs(fdatay_c_half);
     FFT_MAG(analysis->fft, FFT_FFTN_HALF);
 #if ANALYSIS_DEBUG_DATA_INFO == 1
-    for (uint32_t i = 0; i < FFT_FFTN(analysis->fft, FFT_FFTN_HALF); i++)
+    FILE* f = fopen("fdatay_r.txt", "w");
+
+    for (uint32_t i = 0; i < fftn_half; i++)
     {
+        fprintf(f, "%.18f\n", analysis->fft->rez[i]);
+
         if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
             printf("fdatay_r[%6d]: %.12f\n", i, analysis->fft->rez[i]);
         else if (i == ANALYSIS_DEBUG_PRINT_END)
             printf("... \n");
     }
+    fclose(f);
 #endif
 
     // fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
+    uint32_t dc_l_idx = 0;
+    uint32_t dc_r_idx = INDEX_CHECK(analysis->win->mainlobe_bins, fftn_half);
     // fdatay_r_max = max(fdatay_r(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
     // fdata_fbase_idx = find(fdatay_r == fdatay_r_db_max);
-    uint32_t fsignal_idx;
     fft_data_t fsignal_max;
 
     analysis_search_max(analysis->fft->rez,
-        INDEX_CHECK(analysis->win->mainlobe_bins, fftn_half),
+        dc_r_idx,
         INDEX_CHECK(fftn_half - 1, fftn_half),
-        &fsignal_idx,
+        &(analysis->result->fsignal_idx),
         &fsignal_max);
 
     // fdata_fbase_f = fdatax(fdata_fbase_idx);
-    double fsignal = INDEX_TO_FREQ(fsignal_idx, analysis->fft->fftn, analysis->fs);
+    analysis->result->fsignal = INDEX_TO_FREQ(analysis->result->fsignal_idx, analysis->fft->fftn, analysis->fs);
+    // fdata_fsignal_lr_idx = [fdata_fsignal_idx - win_mainlobe; fdata_fsignal_idx + win_mainlobe];
+    uint32_t fsignal_l_idx = INDEX_CHECK(analysis->result->fsignal_idx - analysis->win->mainlobe_bins, fftn_half);
+    uint32_t fsignal_r_idx = INDEX_CHECK(analysis->result->fsignal_idx + analysis->win->mainlobe_bins, fftn_half);
 
 #if ANALYSIS_DEBUG_LOG_INFO == 1
-    printf("fsignal: %d %f\n", fsignal_idx, fsignal);
+    printf("fsignal: %d %f\n", analysis->result->fsignal_idx, analysis->result->fsignal);
 #endif
 
     // % fhd search
@@ -165,27 +207,98 @@ void analysis_run(analysis_t* analysis, fft_data_t* tdata, fft_data_t* timg)
     for (int hdi = 2; hdi <= analysis->hdn; hdi++)
     {
         // fdata_fhd_calc_idx = fdata_fhd_n * (fdata_fbase_idx - 1) + 1;
-        uint16_t fhd_idx_est = hdi * fsignal_idx;
+        uint16_t fhd_idx_est = HD_FREQ_CALC(hdi * analysis->result->fsignal_idx, fftn_half);
         // fdata_fhd_search_lr_idx = [ fdata_fhd_calc_idx - fhd_search_bin; fdata_fhd_calc_idx + fhd_search_bin ]';
         // fdata_fhd_search_max(i) = max(fdatay_r_db_norm(fdata_fhd_search_lr_idx(i, 1) : fdata_fhd_search_lr_idx(i, 2)));
         // fdata_fhd_search_idx(i) = find(fdatay_r_db_norm == fdata_fhd_search_max(i));
 
-        uint32_t fhdi_idx;
         double fhdi_db;
         analysis_search_max(analysis->fft->rez,
             INDEX_CHECK(fhd_idx_est - ANALYSIS_HD_FREQ_SEARCH_BINS, fftn_half),
             INDEX_CHECK(fhd_idx_est + ANALYSIS_HD_FREQ_SEARCH_BINS, fftn_half),
-            &fhdi_idx,
+            &(analysis->result->fhd_idx[hdi - 2]),
             &fhdi_db);
 
         // fdata_fhd_f = fdatax(fdata_fhd_search_idx);
-        double fhdi = INDEX_TO_FREQ(fhdi_idx, analysis->fft->fftn, analysis->fs);
+        analysis->result->fhd[hdi - 2] = INDEX_TO_FREQ(analysis->result->fhd_idx[hdi - 2], analysis->fft->fftn, analysis->fs);
+#if ANALYSIS_DEBUG_LOG_INFO == 1
+        printf("fhd[%d]: %d %f\n", hdi, analysis->result->fhd_idx[hdi - 2], analysis->result->fhd[hdi - 2]);
+#endif
+    }
 
+    // % power calc
+    // fdatay_r_p = fdatay_r.*fdatay_r;
+    ARR_OPER2(MATH_MUL, analysis->fft->rez, analysis->fft->rez, fftn_half);
+#if ANALYSIS_DEBUG_DATA_INFO == 1
+    FILE* f2 = fopen("fdatay_r_p.txt", "w");
+
+    double native_sum = 0;
+    for (uint32_t i = 0; i < fftn_half; i++)
+    {
+        fprintf(f2, "%.18f\n", analysis->fft->rez[i]);
+        native_sum += analysis->fft->rez[i];
+        if (i >= ANALYSIS_DEBUG_PRINT_START && i < ANALYSIS_DEBUG_PRINT_END)
+            printf("fdatay_r_p[%6d]: %.12f\n", i, analysis->fft->rez[i]);
+        else if (i == ANALYSIS_DEBUG_PRINT_END)
+            printf("... \n");
+    }
+    double kahan_sum_res = 0;
+    ARR_SUM_KH(&kahan_sum_res, analysis->fft->rez, 0, fftn_half);
+    printf("native_sum: %.18f\n", native_sum);
+    printf("kahan_sum: %.18f\n", kahan_sum_res);
+    fclose(f2);
+#endif
+    // p_dc = sum(fdatay_r_p(fdata_fdc_lr_idx(1) : fdata_fdc_lr_idx(2)));
+    double pdc = 0;
+    ARR_SUM(&pdc, analysis->fft->rez, dc_l_idx, dc_r_idx);
+
+    // p_signal = sum(fdatay_r_p(fdata_fsignal_lr_idx(1) : fdata_fsignal_lr_idx(2)));
+    analysis->result->psignal = 0;
+    ARR_SUM(&analysis->result->psignal, analysis->fft->rez, fsignal_l_idx, fsignal_r_idx);
+
+    // p_hd = zeros(fhdn - 1, 1);
+    // for i = 1 : fhdn - 1
+    //     p_hd(i) = sum(fdatay_r_p(fdata_fhd_lr_idx(i, 1) : fdata_fhd_lr_idx(i, 2)));
+    // end
+    for (int hdi = 2; hdi <= analysis->hdn; hdi++)
+    {
+        uint32_t fhdi_l_idx = INDEX_CHECK(analysis->result->fhd_idx[hdi - 2] - analysis->win->hdlobe_bins, fftn_half);
+        uint32_t fhdi_r_idx = INDEX_CHECK(analysis->result->fhd_idx[hdi - 2] + analysis->win->hdlobe_bins, fftn_half);
+
+        analysis->result->phd[hdi - 2] = 0;
+        ARR_SUM(&analysis->result->phd[hdi - 2], analysis->fft->rez, fhdi_l_idx, fhdi_r_idx);
+    }
+
+    // p_noise = sum(fdatay_r_p) - p_dc - p_signal - sum(p_hd);
+    double phdsum = 0;
+    ARR_SUM(&phdsum, analysis->result->phd, 0, (analysis->hdn - 2));
+
+    double psum = 0;
+    ARR_SUM_KH(&psum, analysis->fft->rez, 0, fftn_half);
+
+    analysis->result->pnoise = psum;
+    analysis->result->pnoise -= analysis->result->psignal;
+    analysis->result->pnoise -= (pdc + phdsum);
+
+    // % perf calc
+    // snr = 10 * log10(p_signal / p_noise);
+    // thd = 10 * log10(sum(p_hd) / p_signal);
+    analysis->result->snr = 10 * MATH_LOG10(analysis->result->psignal / analysis->result->pnoise);
+    analysis->result->thd = 10 * MATH_LOG10(phdsum / analysis->result->psignal);
+
+    // signal_db = 10 * log10(p_signal);
+    // hdn_db = 10 * log10(p_hd);
 
 #if ANALYSIS_DEBUG_LOG_INFO == 1
-        printf("fhd[%d]: %d %f\n", hdi, fhdi_idx, fhdi);
+    printf("pdc: %.16f\n", pdc);
+    printf("psignal: %.16f\n", analysis->result->psignal);
+    for (int hdi = 2; hdi <= analysis->hdn; hdi++)
+        printf("phd[%d]: %.16f\n", hdi, analysis->result->phd[hdi - 2]);
+    printf("psum: %.16f\n", psum);
+    printf("phdsum: %.16f\n", phdsum);
+    printf("pnoise: %.16f\n", analysis->result->pnoise);
+    printf("snr: %f\n", analysis->result->snr);
+    printf("thd: %f\n", analysis->result->thd);
 #endif
-
-    }
 
 }

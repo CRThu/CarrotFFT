@@ -22,8 +22,9 @@ extern "C"
 #include <stdio.h>
 #endif
 
-#define INDEX_CHECK(IDX, SIZE)          ((IDX) < 0) ? 0 : ((IDX) >= (SIZE) ? (SIZE) - 1 : (IDX))
+#define INDEX_CHECK(IDX, SIZE)          (((int32_t)IDX) < 0) ? 0 : ((IDX) >= (SIZE) ? (SIZE) - 1 : (IDX))
 #define INDEX_TO_FREQ(IDX, FFTN, FS)    (1.0 * IDX * (FS) / (FFTN))
+#define HD_FREQ_CALC(IDX, SIZE)         (IDX)
 
     typedef struct window_t
     {
@@ -39,14 +40,18 @@ extern "C"
 
     typedef struct analysis_report_t
     {
+        uint32_t fsignal_idx;
         double fsignal;
-        double fsignal_db;
+        double psignal;
 
+        uint32_t* fhd_idx;
         double* fhd;
-        double* fhd_db;
+        double* phd;
 
         double fspur;
-        double fspur_db;
+        double pspur;
+
+        double pnoise;
 
         double snr;
         double thd;
@@ -82,6 +87,11 @@ extern "C"
         /// windows data
         /// </summary>
         fft_data_t* win_data;
+
+        /// <summary>
+        /// analysis result
+        /// </summary>
+        analysis_report_t* result;
     } analysis_t;
 
     extern const window_t windows[];

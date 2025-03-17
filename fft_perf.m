@@ -1,6 +1,6 @@
 % fft params
 fs = 20000.0;  % set signal sample frequency
-fftn = 65536;  % set fft length
+fftn = 1048576;  % set fft length
 fhdn = 5;           % set max distortion
 
 % window params
@@ -22,9 +22,9 @@ win_hdlobe = 5;
 self_test_en = 1;
 gen_fin = 921.63;
 gen_phase = rand() * pi;
-gen_snr = 120;
+gen_snr = 160;
 gen_vpp = 0.95;
-gen_hd_db = [-135 -125 -140 -140];
+gen_hd_db = [-200 -200 -200 -200];
 gen_thd = 10 * log10(sum(10 .^ (gen_hd_db / 10)));
 
 % test data path
@@ -94,20 +94,20 @@ fdata_fhd_lr_idx =  [ fdata_fhd_search_idx - win_hdlobe, fdata_fhd_search_idx + 
 
 % power calc
 fdatay_r_p = fdatay_r .* fdatay_r;
-fdata_pdc = sum(fdatay_r_p(fdata_fdc_lr_idx(1) : fdata_fdc_lr_idx(2)));
-fdata_pbase = sum(fdatay_r_p(fdata_fsignal_lr_idx(1) : fdata_fsignal_lr_idx(2)));
-fdata_phd = zeros(fhdn-1,1);
+p_dc = sum(fdatay_r_p(fdata_fdc_lr_idx(1) : fdata_fdc_lr_idx(2)));
+p_signal = sum(fdatay_r_p(fdata_fsignal_lr_idx(1) : fdata_fsignal_lr_idx(2)));
+p_hd = zeros(fhdn-1,1);
 for i=1 : fhdn-1
-    fdata_phd(i) = sum(fdatay_r_p(fdata_fhd_lr_idx(i, 1) : fdata_fhd_lr_idx(i, 2)));
+    p_hd(i) = sum(fdatay_r_p(fdata_fhd_lr_idx(i, 1) : fdata_fhd_lr_idx(i, 2)));
 end
-fdata_pnoise = sum(fdatay_r_p) - fdata_pdc - fdata_pbase - sum(fdata_phd);
+p_noise = sum(fdatay_r_p) - p_dc - p_signal - sum(p_hd);
 
 % perf calc
-snr = 10 * log10(fdata_pbase / fdata_pnoise);
-thd = 10 * log10(sum(fdata_phd) / fdata_pbase);
+snr = 10 * log10(p_signal / p_noise);
+thd = 10 * log10(sum(p_hd) / p_signal);
 
-signal_db = 10 * log10(fdata_pbase);
-hdn_db = 10 * log10(fdata_phd);
+signal_db = 10 * log10(p_signal);
+hdn_db = 10 * log10(p_hd);
 
 % db data chart (norm to 0dB)
 fdatay_r_p_ref = fdatay_r_p(fdata_fsignal_idx);
@@ -153,6 +153,4 @@ if test_data_store == 1
     
     writematrix(snr, fullfile(storepath,'snr.txt'));
     writematrix(thd, fullfile(storepath,'thd.txt'));
-    writematrix(signal_db, fullfile(storepath,'signal_db.txt'));
-    writematrix(hdn_db, fullfile(storepath,'hdn_db.txt'));
 end
