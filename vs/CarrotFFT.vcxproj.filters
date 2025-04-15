@@ -35,16 +35,16 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="timer_wrapper.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="load_data.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="analysis.c">
+    <ClCompile Include="..\src\analysis.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="fft_impl.c">
+    <ClCompile Include="..\src\fft_impl.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\timer_wrapper.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
