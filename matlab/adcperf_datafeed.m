@@ -1,14 +1,15 @@
-function [data] = datafeed(path, filetype, wordtype, actualtype, align, sep)
+function [data] = adcperf_datafeed(path, filetype, wordtype, actualtype, align, sep, signcoding)
 %data read from file
 %   filetype: ( ascii-dec | ascii-hex | binary )
 %   wordtype: ( u | i ) (8 | 16 | 24 | 32) [-] [ big | little ]
 %   actualtype: ( u | i ) (0-wordtype.bits)
 %   align: ( left | right )
 %   sep: ( 'none' | '\n' | '\s' | ',' | ';' )
+%   signcoding: ('offset' | 'comp')
 
-% example: data2=datafeed('./test/ascii-hex.txt','ascii-hex','u16');
-% example: data2=datafeed('./test/ascii-hex.txt','ascii-hex','u16-big','u12','left');
-
+% example: data2=adcperf_datafeed('./test/ascii-hex.txt','ascii-hex','u16');
+% example: data2=adcperf_datafeed('./test/ascii-hex.txt','ascii-hex','u16-big','u12','left');
+% example: code = datafeed(filename, 'ascii-hex', 'u32-big', 'u18', 'left');
 
 % 参数处理与默认值
 if nargin < 2 || isempty(filetype)
@@ -26,24 +27,32 @@ end
 if nargin < 6 || isempty(sep)
     sep = {' ', '\t', '\r', '\n'}; % ASCII word分隔
 end
+if nargin < 7 || isempty(signcoding)
+    signcoding ='comp'; % 默认: 二进制补码
+end
 
 fprintf('[datafeed]: read file path: %s\n', path);
 
 % 解析wordtype
-[wordtype_sign, wordtype_bits, wordtype_endian] = parse_wordtype(wordtype);
+[~, wordtype_bits, wordtype_endian] = parse_wordtype(wordtype);
 [actualtype_sign, actualtype_bits, ~] = parse_wordtype(actualtype);
 
 % 处理
 switch lower(filetype)
     case 'ascii-dec'
+        error('不支持的类型：%s', filetype);
         data = process_ascii_dec(path);
     case 'ascii-hex'
         data = process_ascii_hex(path, wordtype_endian, wordtype_bits, actualtype_bits, align, sep);
     case 'binary'
+        error('不支持的类型：%s', filetype);
         data = process_binary(path);
     otherwise
         error('不支持的类型：%s', filetype);
 end
+
+data = process_sign(data, actualtype_sign, actualtype_bits, signcoding);
+
 end
 
 %% 解析wordtype
@@ -112,7 +121,7 @@ if strcmpi(endian, 'little')
 end
 content_reshape = reshape(permute(hex_3d, [1 3 2]), [], wordbytes);
 
-% 转换为十进制数
+% 转换为十进制数 (hex2dec only support 53bit)
 data_dec = hex2dec(content_reshape);
 
 % 处理位对齐
@@ -126,11 +135,11 @@ if actualbits < wordbits
         case 'right'
             data_dec = bitand(data_dec, 2^actualbits - 1);         % 掩码保留低位
         otherwise
-            error('不支持的对其方式：%s', align);
+            error('不支持的对齐方式：%s', align);
     end
 end
 
-data = uint32(data_dec);
+data = uint64(data_dec);
 end
 
 %% 子函数：处理ASCII DEC文件
@@ -142,3 +151,31 @@ end
 function data = process_binary(path)
 end
 
+
+%% 子函数：处理符号
+% data: 原始数据
+% sign: 'u' | 'i'
+% bits: uint, 0-64
+% signcoding: 'offset' | 'comp'
+function out = process_sign(data, sign, bits, signcoding)
+    switch lower(sign)
+        case 'u'
+            out = data;
+        case 'i'
+            u64mask = typecast(int64(-1),'uint64');
+            
+            switch lower(signcoding)
+                case 'offset'
+                    out = int64(data) - bitset(int64(0), bits);
+                case 'comp'
+                    sign = bitget(uint64(data), bits);
+                    mask = bitshift(u64mask, bits, 'uint64');
+                    out = bitor(uint64(data), sign * mask);
+                    out = typecast(out,'int64');
+                otherwise
+                    error('不支持的符号编码：%s', signcoding);
+            end
+        otherwise
+            error('不支持的符号位：%s', sign);
+    end
+end

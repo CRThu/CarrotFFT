@@ -1,6 +1,13 @@
+% datafeed
+%filename = './test/nb2213_89d84.txt';
+%code = adcperf_datafeed(filename, 'ascii-hex', 'u32-big', 'u18', 'left');
+
+filename = './current/sin.txt';
+portread("COM9", 2000000, filename);
+code = adcperf_datafeed(filename, 'ascii-hex', 'i16-little');
+
 % fft params
-fs = 20000.0;  % set signal sample frequency
-fftn = 1048576;  % set fft length
+fs = 1;  % set signal sample frequency
 fhdn = 5;           % set max distortion
 
 % window params
@@ -19,8 +26,9 @@ win_hdlobe = 5;
 %win_hdlobe = 1;
 
 % test data generate params
-self_test_en = 1;
+self_test_en = 0;
 gen_fin = 921.63;
+gen_fftn = 1048576;
 gen_phase = rand() * pi;
 gen_snr = 160;
 gen_vpp = 0.95;
@@ -34,8 +42,9 @@ rootpath = './testdata';
 fhd_search_bin = 5;
 %fhd_search_bin = ceil(0.5 * fhdn + 1);
 
+
 if self_test_en==1
-    n = (0 : 1 : fftn - 1)';
+    fftn = gen_fftn;
 	tdata = gen_vpp / 2 * cos(2 * pi * gen_fin / fs * n + gen_phase );
 	tdata = awgn(tdata, gen_snr, 'measured');
     for gen_fhdn=1 : length(gen_hd_db)
@@ -43,37 +52,36 @@ if self_test_en==1
         tdata = tdata + hdn_vpp / 2 * cos(2 * pi * gen_fin * (gen_fhdn + 1) / fs * n + gen_phase );
     end
 else
+    fftn = length(code);
     tdata = code;
 end
 
+n = (0 : 1 : fftn - 1);
+fftn_half = floor(fftn / 2) + 1;
 fdatax = (0 : 1 / fftn * fs : fs / 2)';
 
 % generate windata by params
 windata = zeros(size(fftn));
-for k = 0 : length(win_coeff) - 1
-    windata = windata +win_coeff(k+1) * (-1) ^ k * cos(2 * pi * k * n / fftn);
-end
+k = (0 : 1 : length(win_coeff) - 1)';
+windata = sum(((-1) .^ k) .* win_coeff(k+1)' .* cos(k * (2 * pi * n / fftn)));
 % generate windata by windows in matlab
 %windata = blackmanharris(fftn)';
 
 
-tdata_win = tdata .* windata;
+tdata = double(tdata);
+tdata_win = tdata .* windata';
 
 fdatay_c = fft(tdata_win, fftn);
-fdatay_c_half = fdatay_c(1 : fftn / 2 + 1);
+fdatay_c_half = fdatay_c(1 : fftn_half);
 fdatay_r = abs(fdatay_c_half);
 
 % norm
-%fdatay_r = fdatay_r / fftn; 
-%if mod(fftn, 2)==0
-%    fdatay_r(2 : fftn / 2) = fdatay_r(2 : fftn / 2) .* 2;
-%else
-%    fdatay_r(2 : fftn / 2 + 1) = fdatay_r(2 : fftn / 2 + 1) .* 2;
-%end
+fdatay_r = fdatay_r / fftn; 
+fdatay_r(2 : ceil(fftn / 2)) = fdatay_r(2 : ceil(fftn / 2)) .* 2;
 
 % fsignal search
 fdata_fdc_lr_idx = [ 1 ; 1 + win_mainlobe ];
-fdatay_r_max = max(fdatay_r(fdata_fdc_lr_idx(2) : fftn / 2 + 1));
+fdatay_r_max = max(fdatay_r(fdata_fdc_lr_idx(2) : fftn_half));
 fdata_fsignal_idx = find(fdatay_r == fdatay_r_max);
 fdata_fsignal_f = fdatax(fdata_fsignal_idx);
 fdata_fsignal_lr_idx = [fdata_fsignal_idx - win_mainlobe; fdata_fsignal_idx + win_mainlobe];
